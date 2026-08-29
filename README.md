@@ -9,7 +9,7 @@ Each extension is isolated under `apps/`. Repository-wide engineering, security,
 - Chrome-first, Manifest V3 only.
 - WXT + TypeScript is the default extension toolchain.
 - `pnpm` workspaces manage multiple extensions.
-- Cursor is supported through root `AGENTS.md` plus scoped `.cursor/rules/*.mdc` project rules.
+- Cursor is supported through root/nested `AGENTS.md` plus scoped `.cursor/rules/*.mdc` project rules.
 - Each extension must have one narrow, user-visible purpose.
 - Permissions must be the minimum required for the implemented feature set.
 - Remotely hosted executable code is prohibited.
@@ -24,6 +24,7 @@ Each extension is isolated under `apps/`. Repository-wide engineering, security,
 chrome-ext/
 ├─ apps/
 │  └─ <extension-slug>/
+│     ├─ AGENTS.md
 │     ├─ entrypoints/
 │     ├─ lib/
 │     ├─ assets/
@@ -55,6 +56,7 @@ chrome-ext/
 │  ├─ DESIGN_SYSTEM.md
 │  └─ CURSOR.md
 ├─ templates/
+│  ├─ APP_AGENTS.md
 │  ├─ SPEC.md
 │  ├─ PERMISSIONS.md
 │  └─ QA.md
@@ -78,11 +80,12 @@ chrome-ext/
 ## Creating an extension
 
 1. Create `apps/<extension-slug>` with WXT + TypeScript.
-2. Keep Chrome MV3 compatibility even if the tooling supports other browsers.
+2. Copy `templates/APP_AGENTS.md` to `apps/<extension-slug>/AGENTS.md` and fill in the app identity.
 3. Copy and complete `SPEC.md`, `PERMISSIONS.md`, and `QA.md` from `templates/`.
-4. Add `@chrome-ext/design-system` as a `workspace:*` dependency for extension-owned UI.
-5. Implement the smallest end-to-end slice first.
-6. Pass the repository QA gates before release.
+4. Keep Chrome MV3 compatibility even if the tooling supports other browsers.
+5. Add `@chrome-ext/design-system` as a `workspace:*` dependency for extension-owned UI.
+6. Implement the smallest end-to-end slice first.
+7. Pass the repository QA gates before release.
 
 Recommended bootstrap:
 
@@ -109,7 +112,7 @@ See [`docs/DESIGN_SYSTEM.md`](./docs/DESIGN_SYSTEM.md).
 
 ## Cursor
 
-Cursor reads root `AGENTS.md` and scoped rules under `.cursor/rules/`. The repository also includes `.cursorignore` and `.cursorindexingignore` to reduce secret exposure and indexing noise.
+Cursor reads the root `AGENTS.md`, nested app `AGENTS.md`, and scoped rules under `.cursor/rules/`. The repository also includes `.cursorignore` and `.cursorindexingignore` to reduce secret exposure and indexing noise.
 
 Start Cursor tasks by reading the target app docs and the matching project rules. Do not use a legacy `.cursorrules` file.
 
