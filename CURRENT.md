@@ -17,6 +17,7 @@ Last updated: 2026-08-29
 | --- | --- | --- | --- | --- | --- |
 | #6 | `apps/chatgpt-cleaner` / MVP implementation epic | READY | CURSOR | SELF | parent epic |
 | #15 | `apps/chatgpt-cleaner` / live Archive-Delete binding | BLOCKED | USER | USER | n/a |
+| #16 | `apps/chatgpt-cleaner` / Phase 4 local Vault | RUNNING | CURSOR | SELF | `feat/chatgpt-cleaner-p4-local-vault` |
 
 Concurrent active tasks are allowed only when their declared write scopes are disjoint. See `docs/COLLABORATION.md`.
 

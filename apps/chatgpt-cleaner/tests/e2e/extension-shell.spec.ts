@@ -65,12 +65,12 @@ test.describe("Phase 0/1 extension harness", () => {
     await expect(page.getByRole("button", { name: "Bookmarked conversations" })).toBeVisible();
   });
 
-  test("vault shell renders mock reader", async ({ context, extensionId }) => {
+  test("vault shell renders local vault empty or reader chrome", async ({ context, extensionId }) => {
     const page = await context.newPage();
     await page.goto(`chrome-extension://${extensionId}/vault.html`);
     await expect(page.getByRole("heading", { name: "Conversation Vault" })).toBeVisible();
-    await expect(page.getByRole("button", { name: /Keep this conversation/ })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Keep this conversation" })).toBeVisible();
+    await expect(page.getByText("Local development Vault.", { exact: false })).toBeVisible();
+    await expect(page.getByText("No local Vault snapshots yet", { exact: false })).toBeVisible();
   });
 
   test("content script loads only on chatgpt.com and mounts isolated overlay host", async ({

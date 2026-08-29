@@ -5,9 +5,12 @@ import {
   probeCompatibility,
 } from "../lib/adapters/chatgpt";
 import { createFailClosedMutationAdapter } from "../lib/adapters/chatgpt/mutations";
+import {
+  loadLocalVault,
+  persistLocalVault,
+} from "../lib/domain/vault/local-repository";
 import { isExtensionMessage, MESSAGE_VERSION } from "../lib/messaging/schema";
 import { markContentScriptLoaded } from "../lib/runtime/content-marker";
-import { saveLocalSnapshotPreview } from "../lib/storage/local-preview";
 import { createCleanupOverlay } from "../lib/ui/cleanup-overlay";
 import type { CleanupListItem } from "../lib/domain/types";
 
@@ -60,12 +63,38 @@ export default defineContentScript({
 
       injectBookmarkControls(document, {
         onBookmark: (target) => {
-          const captureProbe = probeCompatibility(document);
-          if (!captureProbe.capabilities.canCaptureConversation) {
-            return;
-          }
-          const snapshot = captureCurrentConversation(document);
-          void saveLocalSnapshotPreview(snapshot, target.key);
+          void (async () => {
+            const captureProbe = probeCompatibility(document);
+            if (!captureProbe.capabilities.canCaptureConversation) return;
+            const snapshot = captureCurrentConversation(document);
+            const repo = await loadLocalVault();
+            const ordinal =
+              snapshot.messages.find((message) =>
+                target.sourceMessageId
+                  ? message.sourceMessageId === target.sourceMessageId
+                  : false,
+              )?.ordinal ??
+              snapshot.messages.find((message) => message.role === "assistant")?.ordinal ??
+              0;
+            const excerpt =
+              snapshot.messages
+                .find((message) => message.ordinal === ordinal)
+                ?.blocks.map((block) => ("text" in block ? block.text : ""))
+                .join(" ")
+                .slice(0, 120) || target.key;
+            const result = repo.saveSnapshot({
+              snapshot,
+              anchor: {
+                ...(target.sourceMessageId ? { sourceMessageId: target.sourceMessageId } : {}),
+                messageOrdinal: ordinal,
+                excerpt,
+                anchorKey: target.key,
+              },
+            });
+            if (result.ok) {
+              await persistLocalVault(repo);
+            }
+          })();
         },
       });
     };
