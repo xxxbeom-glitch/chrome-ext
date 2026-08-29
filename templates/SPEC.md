@@ -65,15 +65,34 @@ Define safe behavior for:
 - service-worker restart;
 - partial batch failure.
 
-## 11. Out of scope
+## 11. UI and design system
+
+- Extension-owned surfaces:
+- Injected host-page surfaces:
+- Theme persistence location:
+- Style-isolation strategy:
+- Shared design-system exception, if any:
+
+Default requirements:
+- use `@chrome-ext/design-system`;
+- Pretendard Variable;
+- light/dark/system themes;
+- semantic/component tokens;
+- visible keyboard focus;
+- reduced-motion support;
+- no global reset leakage into third-party pages.
+
+## 12. Out of scope
 
 Explicitly list tempting adjacent features that are not part of this extension.
 
-## 12. Acceptance criteria
+## 13. Acceptance criteria
 
 - [ ] Primary flow works end to end.
 - [ ] Permission set is documented and minimal.
 - [ ] No remote executable code.
+- [ ] Shared design-system contract is satisfied or exception documented.
+- [ ] Light/dark/system UI reviewed when UI exists.
 - [ ] Critical unit/E2E coverage exists.
 - [ ] Production build loads unpacked without errors.
 - [ ] Manual smoke QA completed.
