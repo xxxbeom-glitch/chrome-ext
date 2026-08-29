@@ -33,6 +33,9 @@ jobs:
             pnpm install --no-frozen-lockfile
           fi
 
+      - name: Verify repository policy
+        run: pnpm verify:repo
+
       - name: Lint
         run: pnpm lint
 
