@@ -1,0 +1,38 @@
+@import "@chrome-ext/design-system/base.css";
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--ce-sys-color-bg-canvas);
+  color: var(--ce-sys-color-text-primary);
+}
+
+.ce-shell {
+  display: grid;
+  gap: var(--ce-sys-space-md);
+  max-width: 48rem;
+  margin-inline: auto;
+  padding: var(--ce-sys-space-xl);
+}
+
+.ce-shell h1 {
+  margin: 0;
+  font-size: var(--ce-sys-type-title-lg-size);
+  line-height: var(--ce-sys-type-title-lg-line-height);
+  font-weight: var(--ce-sys-type-title-lg-weight);
+}
+
+.ce-shell p {
+  margin: 0;
+  color: var(--ce-sys-color-text-secondary);
+  font-size: var(--ce-sys-type-body-md-size);
+  line-height: var(--ce-sys-type-body-md-line-height);
+  font-weight: var(--ce-sys-type-body-md-weight);
+}
+
+.ce-shell__badge {
+  color: var(--ce-sys-color-text-disabled);
+  font-size: var(--ce-sys-type-label-sm-size);
+  line-height: var(--ce-sys-type-label-sm-line-height);
+  font-weight: var(--ce-sys-type-label-sm-weight);
+}

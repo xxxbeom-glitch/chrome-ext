@@ -15,7 +15,8 @@ Last updated: 2026-08-29
 
 | Issue | App / scope | State | Owner | Review mode | Branch |
 | --- | --- | --- | --- | --- | --- |
-| #6 | `apps/chatgpt-cleaner` / MVP implementation epic | READY | CURSOR | SELF | pending Phase 0 claim |
+| #6 | `apps/chatgpt-cleaner` / MVP implementation epic | READY | CURSOR | SELF | parent epic |
+| #7 | `apps/chatgpt-cleaner` / Phase 0 bootstrap | RUNNING | CURSOR | SELF | `feat/chatgpt-cleaner-p0-bootstrap` |
 
 Concurrent active tasks are allowed only when their declared write scopes are disjoint. See `docs/COLLABORATION.md`.
 
@@ -38,15 +39,12 @@ Concurrent active tasks are allowed only when their declared write scopes are di
 
 ## Next planned product work
 
-1. Cursor pulls latest `main` and runs `pnpm install` / `pnpm agent:check` in the real local clone.
-2. Cursor reads Issue #6 and `apps/chatgpt-cleaner/docs/EXECUTION_PLAN.md`.
-3. Cursor creates/claims Phase 0, implements it, QA/self-reviews it, then continues Phase 1–7 automatically.
-4. User is interrupted only for an explicit `DECISION_NEEDED` or external setup `BLOCKED` condition defined by the execution plan.
+1. Finish Phase 0 QA + SELF review, then continue Phase 1–7 automatically under Issue #6.
+2. User is interrupted only for an explicit `DECISION_NEEDED` or external setup `BLOCKED` condition defined by the execution plan.
 
 ## Blockers / decisions needed
 
-- No repository-side blocker to starting Phase 0.
-- Local Cursor preflight (`pnpm agent:check`) still needs its first real run on the user's development machine because GitHub Actions cannot validate the user's local `gh` authentication or local git state.
+- No repository-side blocker for Phase 0.
 - Supabase/Google external project activation may require a later one-time user setup during Phase 5 if Cursor cannot configure it through available tooling. This does not block Phases 0–4.
 - Repository is public. Keep Issues/PRs public-safe; switch the repository to private before storing private operational context.
 - GitHub server-side branch protection/ruleset remains optional hardening; agent/CI rules currently enforce the workflow but do not themselves prevent a direct server push to `main`.
