@@ -2,13 +2,16 @@
 
 Personal Chrome extension monorepo for building and maintaining multiple independent Chrome extensions.
 
-Each extension is isolated under `apps/`. Repository-wide engineering, security, Cursor, QA, release, and visual-system rules live at the root.
+Each extension is isolated under `apps/`. Repository-wide engineering, security, Cursor, QA, release, visual-system, and agent-collaboration rules live at the root.
 
 ## Baseline
 
 - Chrome-first, Manifest V3 only.
 - WXT + TypeScript is the default extension toolchain.
 - `pnpm` workspaces manage multiple extensions.
+- GitHub is the operational hub between ChatGPT and Cursor.
+- `CURRENT.md` is the short current-state/recovery checkpoint.
+- GitHub Issues carry tasks, decisions, review state, and handoffs; PRs/commits/CI carry implementation evidence.
 - Cursor is supported through root/nested `AGENTS.md` plus scoped `.cursor/rules/*.mdc` project rules.
 - Each extension must have one narrow, user-visible purpose.
 - Permissions must be the minimum required for the implemented feature set.
@@ -22,6 +25,7 @@ Each extension is isolated under `apps/`. Repository-wide engineering, security,
 
 ```text
 chrome-ext/
+├─ CURRENT.md                  # read first: current state / owner / active Issue
 ├─ apps/
 │  └─ <extension-slug>/
 │     ├─ AGENTS.md
@@ -41,12 +45,6 @@ chrome-ext/
 │     └─ wxt.config.ts
 ├─ packages/
 │  └─ design-system/
-│     ├─ src/
-│     │  ├─ tokens.css
-│     │  ├─ base.css
-│     │  └─ theme.ts
-│     ├─ package.json
-│     └─ tsconfig.json
 ├─ docs/
 │  ├─ ARCHITECTURE.md
 │  ├─ SECURITY.md
@@ -54,28 +52,59 @@ chrome-ext/
 │  ├─ STORE_POLICY.md
 │  ├─ DEVELOPMENT.md
 │  ├─ DESIGN_SYSTEM.md
-│  └─ CURSOR.md
+│  ├─ CURSOR.md
+│  ├─ COLLABORATION.md
+│  ├─ GITHUB_AGENT_SETUP.md
+│  └─ decisions/
 ├─ templates/
 │  ├─ APP_AGENTS.md
 │  ├─ SPEC.md
 │  ├─ PERMISSIONS.md
 │  └─ QA.md
 ├─ scripts/
-│  └─ verify-repo.mjs
+│  ├─ verify-repo.mjs
+│  └─ check-agent-env.mjs
 ├─ .cursor/
 │  └─ rules/
 │     ├─ 00-core.mdc
+│     ├─ 05-github-collaboration.mdc
 │     ├─ 10-extension-architecture.mdc
 │     ├─ 20-design-system.mdc
 │     ├─ 30-third-party-integrations.mdc
 │     └─ 40-testing-and-qa.mdc
-├─ .cursorignore
-├─ .cursorindexingignore
-├─ .github/workflows/ci.yml
+├─ .github/
+│  ├─ ISSUE_TEMPLATE/
+│  │  ├─ task.yml
+│  │  ├─ handoff.yml
+│  │  ├─ decision.yml
+│  │  └─ config.yml
+│  ├─ PULL_REQUEST_TEMPLATE.md
+│  └─ workflows/ci.yml
 ├─ AGENTS.md
 ├─ pnpm-workspace.yaml
 └─ package.json
 ```
+
+## GitHub agent workflow
+
+When ChatGPT or Cursor resumes this repository:
+
+1. read `CURRENT.md`;
+2. open the active GitHub Issue;
+3. read `AGENTS.md`, matching Cursor rules, and app-local docs;
+4. respect the Issue `STATE` / `OWNER` protocol;
+5. implement or review only the owned scope;
+6. record implementation evidence in PR/commit/CI and handoff evidence in the Issue.
+
+Cursor should run:
+
+```bash
+pnpm agent:check
+```
+
+before changing GitHub task state. This verifies the local git remote plus authenticated `gh` access.
+
+See [`docs/COLLABORATION.md`](./docs/COLLABORATION.md) and [`docs/GITHUB_AGENT_SETUP.md`](./docs/GITHUB_AGENT_SETUP.md).
 
 ## Creating an extension
 
@@ -84,8 +113,9 @@ chrome-ext/
 3. Copy and complete `SPEC.md`, `PERMISSIONS.md`, and `QA.md` from `templates/`.
 4. Keep Chrome MV3 compatibility even if the tooling supports other browsers.
 5. Add `@chrome-ext/design-system` as a `workspace:*` dependency for extension-owned UI.
-6. Implement the smallest end-to-end slice first.
-7. Pass the repository QA gates before release.
+6. Create/claim a GitHub task Issue for implementation work.
+7. Implement the smallest end-to-end slice first.
+8. Pass the repository QA gates before review/release.
 
 Recommended bootstrap:
 
@@ -112,9 +142,9 @@ See [`docs/DESIGN_SYSTEM.md`](./docs/DESIGN_SYSTEM.md).
 
 ## Cursor
 
-Cursor reads the root `AGENTS.md`, nested app `AGENTS.md`, and scoped rules under `.cursor/rules/`. The repository also includes `.cursorignore` and `.cursorindexingignore` to reduce secret exposure and indexing noise.
+Cursor reads `CURRENT.md`, the active GitHub Issue, root `AGENTS.md`, nested app `AGENTS.md`, and scoped rules under `.cursor/rules/`. The repository also includes `.cursorignore` and `.cursorindexingignore` to reduce secret exposure and indexing noise.
 
-Start Cursor tasks by reading the target app docs and the matching project rules. Do not use a legacy `.cursorrules` file.
+Do not use a legacy `.cursorrules` file and do not create a local-only shadow task system.
 
 See [`docs/CURSOR.md`](./docs/CURSOR.md).
 
@@ -139,7 +169,10 @@ The root commands are the canonical CI interface. Individual apps may implement 
 
 ## Read before coding
 
+- [`CURRENT.md`](./CURRENT.md)
+- active GitHub Issue
 - [`AGENTS.md`](./AGENTS.md)
+- [`docs/COLLABORATION.md`](./docs/COLLABORATION.md)
 - [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md)
 - [`docs/SECURITY.md`](./docs/SECURITY.md)
 - [`docs/QA.md`](./docs/QA.md)
