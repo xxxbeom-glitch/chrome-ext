@@ -1,34 +1,34 @@
 import { describe, expect, it, vi } from "vitest";
-import type { ConversationSnapshot } from "../../lib/adapters/chatgpt/types";
+import type { MessageSnapshot } from "../../lib/adapters/chatgpt/types";
 import { LocalVaultRepository } from "../../lib/domain/vault/local-repository";
 import { createVaultService } from "../../lib/domain/vault/service";
 
-function snap(completeness: "complete" | "partial" = "complete"): ConversationSnapshot {
+function item(): MessageSnapshot {
   return {
     sourceConversationId: "c1",
     sourceUrl: "https://chatgpt.com/c/c1",
-    title: "T",
+    sourceConversationTitle: "T",
+    sourceMessageId: "m1",
+    sourceMessageKey: "msg:m1",
+    role: "assistant",
+    messageOrdinal: 1,
     capturedAt: "2026-08-29T00:00:00.000Z",
-    completeness,
-    messages: [{ ordinal: 0, role: "assistant", blocks: [{ type: "paragraph", text: "hi" }] }],
+    blocks: [{ type: "paragraph", text: "hi" }],
   };
 }
 
 describe("vault service routing", () => {
-  it("saves to local when cloud is unavailable", async () => {
+  it("saves one item locally when cloud is unavailable", async () => {
     const local = new LocalVaultRepository();
     const cloudSave = vi.fn();
     const service = createVaultService({
       useCloud: async () => false,
-      cloud: { saveSnapshot: cloudSave, list: async () => [], deleteVaultOnly: async () => false } as never,
+      cloud: { saveItem: cloudSave, list: async () => [], deleteVaultOnly: async () => false } as never,
       loadLocal: async () => local,
       persistLocal: async () => undefined,
     });
 
-    const result = await service.saveSnapshot({
-      snapshot: snap(),
-      anchor: { messageOrdinal: 0, excerpt: "hi" },
-    });
+    const result = await service.saveItem(item());
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.backend).toBe("local");
     expect(cloudSave).not.toHaveBeenCalled();
@@ -44,7 +44,7 @@ describe("vault service routing", () => {
     const service = createVaultService({
       useCloud: async () => true,
       cloud: {
-        saveSnapshot: cloudSave,
+        saveItem: cloudSave,
         list: async () => [],
         deleteVaultOnly: async () => false,
       } as never,
@@ -52,10 +52,7 @@ describe("vault service routing", () => {
       persistLocal: async () => undefined,
     });
 
-    const result = await service.saveSnapshot({
-      snapshot: snap(),
-      anchor: { messageOrdinal: 0, excerpt: "hi" },
-    });
+    const result = await service.saveItem(item());
     expect(result).toMatchObject({
       ok: false,
       backend: "cloud",
@@ -65,7 +62,7 @@ describe("vault service routing", () => {
     expect(cloudSave).toHaveBeenCalledOnce();
   });
 
-  it("lists cloud records when signed in", async () => {
+  it("lists independent cloud records", async () => {
     const service = createVaultService({
       useCloud: async () => true,
       cloud: {
@@ -73,21 +70,23 @@ describe("vault service routing", () => {
           {
             id: "v1",
             sourceConversationId: "c1",
-            title: "Cloud",
-            snapshot: snap(),
-            completeness: "complete",
-            messageCount: 1,
+            sourceUrl: "https://chatgpt.com/c/c1",
+            sourceConversationTitle: "Cloud",
+            sourceMessageId: "m1",
+            sourceMessageKey: "msg:m1",
+            role: "assistant",
+            messageOrdinal: 1,
+            blocks: [{ type: "paragraph", text: "saved answer" }],
             capturedAt: "2026-08-29T00:00:00.000Z",
             createdAt: "2026-08-29T00:00:00.000Z",
             updatedAt: "2026-08-29T00:00:00.000Z",
-            bookmarks: [],
           },
         ],
-        saveSnapshot: async () => ({ ok: false, error: "n/a", preservedExisting: true }),
+        saveItem: async () => ({ ok: false, error: "n/a", preservedExisting: true }),
         deleteVaultOnly: async () => false,
       } as never,
     });
     expect(await service.backend()).toBe("cloud");
-    expect((await service.list())[0]?.title).toBe("Cloud");
+    expect((await service.list())[0]?.sourceConversationTitle).toBe("Cloud");
   });
 });
