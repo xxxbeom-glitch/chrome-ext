@@ -15,6 +15,11 @@ export interface CleanupOverlayController {
   open: () => void;
   close: () => void;
   isOpen: () => boolean;
+  setDiscovery: (
+    nextItems: CleanupListItem[],
+    nextCompleteness: DiscoveryCompleteness,
+    note?: string,
+  ) => void;
 }
 
 function formatDate(value?: string): string {
@@ -221,7 +226,9 @@ export function createCleanupOverlay(doc: Document): CleanupOverlayController {
       open = true;
       lastFocused = doc.activeElement;
       root.hidden = false;
-      setStatus("Showing mock/read-only discovery data. Host mutations are disabled in Phase 1.");
+      if (!statusEl.textContent) {
+        setStatus("Read-only discovery. Host mutations remain disabled until Phase 3.");
+      }
       render();
       dialog.focus();
       doc.addEventListener("keydown", onKeyDown, true);
@@ -237,6 +244,12 @@ export function createCleanupOverlay(doc: Document): CleanupOverlayController {
     },
     isOpen() {
       return open;
+    },
+    setDiscovery(nextItems, nextCompleteness, note) {
+      items = nextItems.map((item) => ({ ...item }));
+      completeness = nextCompleteness;
+      if (note) setStatus(note);
+      if (open) render();
     },
   };
 
