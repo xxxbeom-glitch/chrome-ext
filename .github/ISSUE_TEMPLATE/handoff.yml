@@ -1,0 +1,76 @@
+name: Handoff / Question
+about: Cross-agent question, blocker, or implementation handoff that must survive chat context.
+title: "[HANDOFF] "
+body:
+  - type: dropdown
+    id: from
+    attributes:
+      label: From
+      options:
+        - CURSOR
+        - CHATGPT
+        - USER
+    validations:
+      required: true
+
+  - type: dropdown
+    id: to
+    attributes:
+      label: To
+      options:
+        - CHATGPT
+        - CURSOR
+        - USER
+    validations:
+      required: true
+
+  - type: input
+    id: related
+    attributes:
+      label: Related Task / PR
+      placeholder: "#12 / PR #14 / NONE"
+    validations:
+      required: true
+
+  - type: textarea
+    id: situation
+    attributes:
+      label: Situation
+      description: What is known and why handoff is required.
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Files, commits, test results, error messages, or relevant decision records.
+    validations:
+      required: true
+
+  - type: textarea
+    id: request
+    attributes:
+      label: Exact Request
+      description: State the single decision, review, or action needed from the receiver.
+    validations:
+      required: true
+
+  - type: textarea
+    id: safe_next
+    attributes:
+      label: Safe Work That Can Continue
+      description: What can continue without the answer, or NONE.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: state
+    attributes:
+      label: State
+      options:
+        - DECISION_NEEDED
+        - BLOCKED
+        - REVIEW
+    validations:
+      required: true
