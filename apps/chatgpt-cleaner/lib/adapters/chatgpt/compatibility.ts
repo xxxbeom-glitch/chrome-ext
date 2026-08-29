@@ -1,3 +1,8 @@
+import {
+  ASSISTANT_ACTION_ROW_REASON,
+  locateAssistantActionRows,
+  markBookmarkCompatibility,
+} from "./dom/action-row";
 import { CHATGPT_SELECTORS } from "./dom/selectors";
 import type { ChatGptCapabilities } from "./types";
 
@@ -29,11 +34,13 @@ export function probeCompatibility(doc: Document): CompatibilityProbeResult {
 
   const hasLinks = doc.querySelector(CHATGPT_SELECTORS.conversationLink) != null;
   const hasMessages = doc.querySelector(CHATGPT_SELECTORS.messageArticle) != null;
-  const hasActions = doc.querySelector(CHATGPT_SELECTORS.assistantActionRow) != null;
+  const actionRowCount = locateAssistantActionRows(doc).length;
+  const hasActions = actionRowCount > 0;
+  markBookmarkCompatibility(doc, actionRowCount);
 
   if (!hasLinks) reasons.push("conversation links not found");
   if (!hasMessages) reasons.push("conversation messages not found");
-  if (!hasActions) reasons.push("assistant action rows not found");
+  if (!hasActions) reasons.push(ASSISTANT_ACTION_ROW_REASON);
 
   const capabilities: ChatGptCapabilities = {
     canDiscoverConversations: hasLinks,

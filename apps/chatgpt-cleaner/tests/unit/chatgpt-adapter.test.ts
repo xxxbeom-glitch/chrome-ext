@@ -50,6 +50,7 @@ describe("chatgpt read adapter", () => {
     const doc = loadFixture(CONVERSATION_PAGE_FIXTURE, "/c/abc-111");
     const snapshot = captureCurrentConversation(doc);
     expect(snapshot.messages.length).toBeGreaterThan(0);
+    expect(snapshot.messages.filter((message) => message.role === "assistant")).toHaveLength(1);
     const assistant = snapshot.messages.find((message) => message.role === "assistant");
     expect(assistant?.blocks.some((block) => block.type === "code")).toBe(true);
     expect(assistant?.blocks.some((block) => block.type === "unsupported-media")).toBe(true);
@@ -66,5 +67,8 @@ describe("chatgpt read adapter", () => {
     expect(second.injected).toBe(0);
     expect(second.skipped).toBe(1);
     expect(doc.querySelectorAll('[data-ce-bookmark-control="true"]')).toHaveLength(1);
+    expect(doc.querySelector("[data-ce-bookmark-control='true']")?.getAttribute("aria-label")).toBe(
+      "보관함에 저장",
+    );
   });
 });

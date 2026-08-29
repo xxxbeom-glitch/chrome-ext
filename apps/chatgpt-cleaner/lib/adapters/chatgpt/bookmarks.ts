@@ -1,29 +1,41 @@
 import {
+  findAssociatedMessage,
+  insertBookmarkControl,
+  locateAssistantActionRows,
+  markBookmarkCompatibility,
+} from "./dom/action-row";
+import {
   BOOKMARK_ATTR,
   BOOKMARK_KEY_ATTR,
+  BOOKMARK_STATUS_ATTR,
   CHATGPT_SELECTORS,
 } from "./dom/selectors";
 import type { BookmarkAnchorTarget } from "./types";
 
+export const BOOKMARK_LABELS = {
+  idle: "보관함에 저장",
+  saving: "저장 중",
+  saved: "저장됨",
+  failed: "다시 시도",
+} as const;
+
 function anchorKey(row: Element, index: number): string {
-  const message = row.closest(CHATGPT_SELECTORS.messageArticle);
+  const message = findAssociatedMessage(row);
   const messageId = message?.getAttribute(CHATGPT_SELECTORS.messageId);
   if (messageId) return `msg:${messageId}`;
   return `ordinal:${index}`;
 }
 
 export function locateBookmarkAnchors(doc: Document): BookmarkAnchorTarget[] {
-  return Array.from(doc.querySelectorAll(CHATGPT_SELECTORS.assistantActionRow)).map(
-    (actionRow, index) => {
-      const message = actionRow.closest(CHATGPT_SELECTORS.messageArticle);
-      const sourceMessageId = message?.getAttribute(CHATGPT_SELECTORS.messageId) ?? undefined;
-      return {
-        key: anchorKey(actionRow, index),
-        ...(sourceMessageId ? { sourceMessageId } : {}),
-        actionRow,
-      };
-    },
-  );
+  return locateAssistantActionRows(doc).map((actionRow, index) => {
+    const message = findAssociatedMessage(actionRow);
+    const sourceMessageId = message?.getAttribute(CHATGPT_SELECTORS.messageId) ?? undefined;
+    return {
+      key: anchorKey(actionRow, index),
+      ...(sourceMessageId ? { sourceMessageId } : {}),
+      actionRow,
+    };
+  });
 }
 
 export type BookmarkSaveStatus = "idle" | "saving" | "saved" | "failed";
@@ -36,50 +48,90 @@ export interface BookmarkControlHandle {
   setStatus(status: BookmarkSaveStatus, detail?: string): void;
 }
 
+function createBookmarkIcon(doc: Document, filled: boolean): SVGSVGElement {
+  const svg = doc.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("width", "20");
+  svg.setAttribute("height", "20");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("focusable", "false");
+  svg.style.pointerEvents = "none";
+  svg.style.display = "block";
+
+  const path = doc.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", "M19 21 12 16 5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z");
+  path.setAttribute("fill", filled ? "currentColor" : "none");
+  path.setAttribute("stroke", "currentColor");
+  path.setAttribute("stroke-width", "2");
+  path.setAttribute("stroke-linecap", "round");
+  path.setAttribute("stroke-linejoin", "round");
+  svg.append(path);
+  return svg;
+}
+
+function styleHostActionButton(button: HTMLButtonElement): void {
+  button.style.display = "inline-flex";
+  button.style.alignItems = "center";
+  button.style.justifyContent = "center";
+  button.style.width = "36px";
+  button.style.height = "36px";
+  button.style.margin = "0";
+  button.style.padding = "0";
+  button.style.border = "0";
+  button.style.borderRadius = "8px";
+  button.style.background = "transparent";
+  button.style.color = "inherit";
+  button.style.flex = "0 0 auto";
+  button.style.lineHeight = "0";
+  button.style.appearance = "none";
+}
+
 function applyStatus(button: HTMLButtonElement, status: BookmarkSaveStatus, detail?: string): void {
-  switch (status) {
-    case "saving":
-      button.textContent = "저장 중...";
-      button.disabled = true;
-      button.title = "보관함에 저장하는 중";
-      break;
-    case "saved":
-      button.textContent = "저장됨";
-      button.disabled = false;
-      button.title = detail ?? "보관함에 저장됨";
-      break;
-    case "failed":
-      button.textContent = "다시 시도";
-      button.disabled = false;
-      button.title = detail ?? "저장 실패";
-      break;
-    default:
-      button.textContent = "보관함";
-      button.disabled = false;
-      button.title = "대화를 보관함에 저장";
-  }
+  const label = BOOKMARK_LABELS[status];
+  button.disabled = status === "saving";
+  button.style.cursor = status === "saving" ? "default" : "pointer";
+  button.title = detail ?? label;
+  button.setAttribute("aria-label", label);
+  button.setAttribute("aria-busy", status === "saving" ? "true" : "false");
+  button.setAttribute(BOOKMARK_STATUS_ATTR, status);
+  button.replaceChildren(createBookmarkIcon(button.ownerDocument, status === "saved"));
+}
+
+function createBookmarkButton(doc: Document): HTMLButtonElement {
+  const button = doc.createElement("button");
+  button.type = "button";
+  button.setAttribute(BOOKMARK_ATTR, "true");
+  styleHostActionButton(button);
+  applyStatus(button, "idle");
+
+  button.addEventListener("pointerenter", () => {
+    if (!button.disabled) button.style.background = "rgba(127,127,127,0.12)";
+  });
+  button.addEventListener("pointerleave", () => {
+    button.style.background = "transparent";
+  });
+
+  return button;
 }
 
 export function injectBookmarkControls(
   doc: Document,
   options: InjectBookmarkOptions,
 ): { injected: number; skipped: number } {
+  const targets = locateBookmarkAnchors(doc);
+  markBookmarkCompatibility(doc, targets.length);
+
   let injected = 0;
   let skipped = 0;
 
-  for (const target of locateBookmarkAnchors(doc)) {
+  for (const target of targets) {
     if (target.actionRow.querySelector(`[${BOOKMARK_ATTR}="true"]`)) {
       skipped += 1;
       continue;
     }
 
-    const button = doc.createElement("button");
-    button.type = "button";
-    button.setAttribute("aria-label", "대화를 보관함에 저장");
-    button.setAttribute(BOOKMARK_ATTR, "true");
+    const button = createBookmarkButton(doc);
     button.setAttribute(BOOKMARK_KEY_ATTR, target.key);
-    button.style.marginInlineStart = "8px";
-    applyStatus(button, "idle");
 
     const control: BookmarkControlHandle = {
       setStatus(status, detail) {
@@ -93,7 +145,7 @@ export function injectBookmarkControls(
       options.onBookmark(target, control);
     });
 
-    target.actionRow.append(button);
+    insertBookmarkControl(target.actionRow, button);
     injected += 1;
   }
 
