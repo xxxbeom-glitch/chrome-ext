@@ -6,13 +6,20 @@ const errors = [];
 
 const requiredRootFiles = [
   "AGENTS.md",
+  "CURRENT.md",
   ".cursorignore",
   ".cursorindexingignore",
   ".cursor/rules/00-core.mdc",
+  ".cursor/rules/05-github-collaboration.mdc",
   ".cursor/rules/10-extension-architecture.mdc",
   ".cursor/rules/20-design-system.mdc",
   ".cursor/rules/30-third-party-integrations.mdc",
   ".cursor/rules/40-testing-and-qa.mdc",
+  ".github/ISSUE_TEMPLATE/config.yml",
+  ".github/ISSUE_TEMPLATE/task.yml",
+  ".github/ISSUE_TEMPLATE/handoff.yml",
+  ".github/ISSUE_TEMPLATE/decision.yml",
+  ".github/PULL_REQUEST_TEMPLATE.md",
   "docs/ARCHITECTURE.md",
   "docs/SECURITY.md",
   "docs/QA.md",
@@ -20,6 +27,11 @@ const requiredRootFiles = [
   "docs/DEVELOPMENT.md",
   "docs/DESIGN_SYSTEM.md",
   "docs/CURSOR.md",
+  "docs/COLLABORATION.md",
+  "docs/GITHUB_AGENT_SETUP.md",
+  "docs/decisions/README.md",
+  "docs/decisions/DEC-0001-github-collaboration-hub.md",
+  "scripts/check-agent-env.mjs",
   "templates/APP_AGENTS.md",
   "packages/design-system/package.json",
   "packages/design-system/tsconfig.json",
@@ -52,6 +64,69 @@ if (existsSync(cursorRulesDir)) {
     }
     if (!content.includes("\nalwaysApply:")) {
       errors.push(`Cursor rule is missing alwaysApply frontmatter: .cursor/rules/${name}`);
+    }
+  }
+}
+
+const currentPath = join(root, "CURRENT.md");
+if (existsSync(currentPath)) {
+  const current = readFileSync(currentPath, "utf8");
+  for (const marker of ["## Active work", "Current owner:", "## Blockers / decisions needed", "## Recovery rule"]) {
+    if (!current.includes(marker)) {
+      errors.push(`CURRENT.md is missing required marker: ${marker}`);
+    }
+  }
+}
+
+const collaborationPath = join(root, "docs", "COLLABORATION.md");
+if (existsSync(collaborationPath)) {
+  const collaboration = readFileSync(collaborationPath, "utf8");
+  const requiredStates = [
+    "`DRAFT`",
+    "`READY`",
+    "`RUNNING`",
+    "`REVIEW`",
+    "`FIX_REQUIRED`",
+    "`DECISION_NEEDED`",
+    "`BLOCKED`",
+    "`DONE`",
+  ];
+  for (const state of requiredStates) {
+    if (!collaboration.includes(state)) {
+      errors.push(`Collaboration contract is missing state: ${state}`);
+    }
+  }
+  for (const marker of ["STATE: RUNNING", "OWNER: CURSOR", "STATE: REVIEW", "OWNER: CHATGPT"]) {
+    if (!collaboration.includes(marker)) {
+      errors.push(`Collaboration contract is missing handoff marker: ${marker}`);
+    }
+  }
+}
+
+const packagePath = join(root, "package.json");
+if (existsSync(packagePath)) {
+  const packageJson = JSON.parse(readFileSync(packagePath, "utf8"));
+  if (packageJson.scripts?.["agent:check"] !== "node scripts/check-agent-env.mjs") {
+    errors.push("Root package.json must expose the canonical `pnpm agent:check` preflight.");
+  }
+}
+
+const taskFormPath = join(root, ".github", "ISSUE_TEMPLATE", "task.yml");
+if (existsSync(taskFormPath)) {
+  const form = readFileSync(taskFormPath, "utf8");
+  for (const field of ["App / Scope", "Acceptance Criteria", "Do Not Change", "Required QA", "Initial Owner", "Initial State"]) {
+    if (!form.includes(field)) {
+      errors.push(`Task issue form is missing required field: ${field}`);
+    }
+  }
+}
+
+const prTemplatePath = join(root, ".github", "PULL_REQUEST_TEMPLATE.md");
+if (existsSync(prTemplatePath)) {
+  const template = readFileSync(prTemplatePath, "utf8");
+  for (const marker of ["## Permission / data impact", "## QA evidence", "## Residual risk", "## Not done"]) {
+    if (!template.includes(marker)) {
+      errors.push(`PR template is missing required section: ${marker}`);
     }
   }
 }
