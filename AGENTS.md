@@ -67,7 +67,7 @@ Store-policy compliance is a release gate even for extensions initially used onl
 ## 7. Implementation workflow
 
 For each meaningful change:
-1. recover current state from `CURRENT.md` and the active GitHub Issue;
+1. recover current state from `CURRENT.md` and the target GitHub Issue;
 2. identify the target app and its scope;
 3. read the app SPEC, permissions document, QA document, and app `AGENTS.md`;
 4. inspect current architecture before changing it;
@@ -76,7 +76,7 @@ For each meaningful change:
 7. run repository verification, static checks, unit tests, build, and relevant E2E;
 8. perform manual extension smoke QA when browser behavior changed;
 9. update documentation when permissions, data flow, UX contract, design tokens, architecture, or durable decisions changed;
-10. hand off using the GitHub Issue protocol in `docs/COLLABORATION.md`.
+10. complete the task using the declared `REVIEW_MODE` in `docs/COLLABORATION.md`.
 
 Do not silently broaden scope.
 
@@ -94,7 +94,8 @@ A change is not done until:
 - manual smoke steps are complete when extension runtime behavior changed;
 - documentation reflects the implemented behavior;
 - the task Issue contains explicit QA/result/risk/not-done evidence;
-- the task is reviewed according to the GitHub collaboration state machine.
+- the review required by `REVIEW_MODE` has passed;
+- the Issue is moved to DONE/closed and `CURRENT.md` is cleaned up when the active reviewer owns completion.
 
 ## 9. Testing expectations
 
@@ -178,21 +179,25 @@ When using Cursor:
 
 Read `docs/CURSOR.md` for the expected Cursor workflow.
 
-## 16. GitHub collaboration and handoff
+## 16. GitHub collaboration and review modes
 
-GitHub is the operational hub shared by ChatGPT and Cursor. Notion, chat history, editor memory, and local scratch notes are not task-state authorities for this repository.
+GitHub is the operational hub shared by Cursor, ChatGPT, and the user. Notion, chat history, editor memory, and local scratch notes are not task-state authorities for this repository.
+
+ChatGPT is optional. The user must be able to run an end-to-end sequence entirely in Cursor.
 
 Mandatory rules:
 - Read `CURRENT.md` first when resuming or starting meaningful work.
-- Read the active GitHub Issue and its latest state-transition comments.
-- Follow `docs/COLLABORATION.md` for task states, ownership, claim, completion, review, and fix loops.
+- Read the target GitHub Issue and its latest exact `STATE`, `OWNER`, and `REVIEW_MODE` transitions.
+- Follow `docs/COLLABORATION.md` for task states, ownership, claim, review, completion, and fix loops.
 - A task has exactly one current owner: `CHATGPT`, `CURSOR`, or `USER`.
 - Cursor must run `pnpm agent:check` before changing GitHub task state.
-- Cursor normally hands completed implementation to `STATE: REVIEW / OWNER: CHATGPT`; it does not self-approve unless review authority was explicitly delegated.
-- ChatGPT owns normal planning/review and normally maintains `CURRENT.md` on main.
-- Product/UX/policy/permission/privacy ambiguity must not be guessed; use `DECISION_NEEDED`.
+- `REVIEW_MODE: SELF` is the routine default for explicit, objectively testable work within approved scope/policy. It requires a distinct second-pass review; it is not permission to skip review.
+- `REVIEW_MODE: CHATGPT` is optional for second-opinion, adversarial, product/UX, or policy review.
+- `REVIEW_MODE: USER` is used when hands-on subjective acceptance is the real completion gate.
+- Cursor may mark SELF-reviewed work DONE only after required QA/evidence and the separate self-review pass succeed.
+- Product/UX/policy/permission/privacy/destructive-action ambiguity must not be guessed; move the task to `DECISION_NEEDED` first.
 - Accepted durable decisions belong in `docs/decisions/`.
-- PRs/commits and CI are implementation evidence; Issue comments are handoff evidence.
+- PRs/commits and CI are implementation evidence; Issue comments are state/review evidence.
 - The repository is public, so never put private conversation contents, session/account data, credentials, personal exports, or other private operational material into Issues/PRs/commits.
 
 ## 17. Documentation hierarchy
