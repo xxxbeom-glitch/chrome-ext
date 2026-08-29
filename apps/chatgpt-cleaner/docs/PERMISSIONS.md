@@ -5,7 +5,7 @@
 | Permission / host | User-visible feature | Why narrower access is insufficient | Optional? |
 |---|---|---|---|
 | `storage` | persist theme/settings, safe operation recovery metadata, client cache, local Vault | extension state must survive popup/service-worker lifecycle | No |
-| `identity` | Google OAuth redirect flow for Supabase Auth via `chrome.identity.launchWebAuthFlow` | browser-safe OAuth callback handling is required for cross-device Vault sign-in | No (chosen auth implementation) |
+| `identity` | Google OAuth PKCE via `chrome.identity.launchWebAuthFlow` + Supabase `exchangeCodeForSession` | Extension-safe OAuth callback; do not use `signInWithIdToken` in this app | No (chosen auth implementation) |
 | `https://chatgpt.com/*` | inject cleanup modal/bookmark action; discover/capture/mutate ChatGPT conversations | the product must operate continuously on ChatGPT, not only after one toolbar click | No |
 | `https://sgdoskwhwenyugkljzyk.supabase.co/*` | save/read synced Vault snapshots and Auth API | cloud sync requires cross-origin API access from extension context; exact project host only | No after cloud sync enabled |
 
