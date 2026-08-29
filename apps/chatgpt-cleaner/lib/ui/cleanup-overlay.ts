@@ -4,9 +4,11 @@ import {
 } from "../domain/mock-data";
 import {
   discoverySummary,
+  emptyListMessage,
   filterCleanupItems,
   selectAllLoadedLabel,
   selectedCount,
+  type DiscoveryOutcome,
 } from "../domain/cleanup-ui";
 import {
   createOperationId,
@@ -30,6 +32,7 @@ export interface CleanupOverlayController {
     nextItems: CleanupListItem[],
     nextCompleteness: DiscoveryCompleteness,
     note?: string,
+    outcome?: DiscoveryOutcome,
   ) => void;
   setCapabilities: (next: CleanupCapabilities) => void;
 }
@@ -122,6 +125,7 @@ export function createCleanupOverlay(
   let query = "";
   let items: CleanupListItem[] = MOCK_CLEANUP_ITEMS.map((item) => ({ ...item }));
   let completeness: DiscoveryCompleteness = MOCK_DISCOVERY_COMPLETENESS;
+  let discoveryOutcome: DiscoveryOutcome = "ready";
   let lastFocused: Element | null = null;
   let pendingDeleteIds: string[] = [];
   let running = false;
@@ -217,7 +221,7 @@ export function createCleanupOverlay(
 
   function render(): void {
     const visible = visibleItems();
-    summaryEl.textContent = discoverySummary(items.length, completeness);
+    summaryEl.textContent = discoverySummary(items.length, completeness, discoveryOutcome);
     selectAllLabel.textContent = selectAllLoadedLabel(completeness);
     const selected = selectedCount(visible);
     selectedCountEl.textContent = `${selected}개 선택됨`;
@@ -231,7 +235,7 @@ export function createCleanupOverlay(
     if (visible.length === 0) {
       const empty = doc.createElement("li");
       empty.className = "ce-empty";
-      empty.textContent = query ? "검색과 일치하는 대화가 없습니다." : "대화가 없습니다";
+      empty.textContent = emptyListMessage(query, completeness, discoveryOutcome);
       list.append(empty);
       return;
     }
@@ -363,9 +367,10 @@ export function createCleanupOverlay(
     isOpen() {
       return open;
     },
-    setDiscovery(nextItems, nextCompleteness, note) {
+    setDiscovery(nextItems, nextCompleteness, note, outcome = "ready") {
       items = nextItems.map((item) => ({ ...item }));
       completeness = nextCompleteness;
+      discoveryOutcome = completeness === "loading" ? "loading" : outcome;
       if (note) setStatus(note);
       if (open) render();
     },

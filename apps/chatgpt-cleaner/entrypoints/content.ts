@@ -1,6 +1,6 @@
 import {
   captureCurrentConversation,
-  discoverConversationsFromDom,
+  discoverAccountHistory,
   injectBookmarkControls,
   probeCompatibility,
 } from "../lib/adapters/chatgpt";
@@ -23,35 +23,27 @@ export default defineContentScript({
       capabilities: mutationAdapter.capabilities,
     });
 
-    const refreshDiscovery = (): void => {
+    const applyProbe = (): void => {
       const probe = probeCompatibility(document);
       overlay.setCapabilities({
         canArchive: probe.capabilities.canArchive && mutationAdapter.capabilities.canArchive,
         canDelete: probe.capabilities.canDelete && mutationAdapter.capabilities.canDelete,
       });
+    };
 
-      if (!probe.capabilities.canDiscoverConversations) {
-        overlay.setDiscovery(
-          [],
-          "unknown",
-          `ChatGPT가 바뀌었거나 사이드바를 쓸 수 없습니다 (${probe.reasons.join("; ") || "호환되지 않음"}). 위험 작업은 비활성화됩니다.`,
-        );
-        return;
-      }
-
-      const page = discoverConversationsFromDom(document);
-      const items: CleanupListItem[] = page.items.map((item) => ({
+    const loadDiscovery = async (): Promise<void> => {
+      applyProbe();
+      overlay.setDiscovery([], "loading", "대화 목록을 불러오는 중…", "loading");
+      const result = await discoverAccountHistory({ document });
+      const items: CleanupListItem[] = result.items.map((item) => ({
         sourceId: item.sourceId,
         title: item.title,
         sourceUrl: item.sourceUrl,
+        updatedAt: item.updatedAt,
         selected: false,
         status: "idle",
       }));
-      overlay.setDiscovery(
-        items,
-        page.completeness,
-        "실시간 DOM 목록입니다. ChatGPT 호환성이 확인될 때까지 보관/삭제는 실행되지 않습니다.",
-      );
+      overlay.setDiscovery(items, result.completeness, result.userNote, result.outcome);
     };
 
     const syncBookmarks = (): void => {
@@ -112,7 +104,7 @@ export default defineContentScript({
       });
     };
 
-    refreshDiscovery();
+    applyProbe();
     syncBookmarks();
 
     const observer = new MutationObserver(() => {
@@ -131,8 +123,8 @@ export default defineContentScript({
       }
 
       if (raw.type === "cleanup.open") {
-        refreshDiscovery();
         overlay.open();
+        void loadDiscovery();
         sendResponse({ version: MESSAGE_VERSION, type: "cleanup.status", open: true });
         return false;
       }

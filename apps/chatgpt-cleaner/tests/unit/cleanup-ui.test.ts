@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  DISCOVERY_FAILED_NOTE,
   discoverySummary,
+  emptyListMessage,
   filterCleanupItems,
   selectAllLoadedLabel,
   selectedCount,
@@ -24,5 +26,15 @@ describe("cleanup UI helpers", () => {
     expect(discoverySummary(4, "endConfirmed")).toContain("목록 끝 확인됨");
     expect(selectAllLoadedLabel("hasMore")).toBe("불러온 대화 전체 선택");
     expect(selectAllLoadedLabel("endConfirmed")).toBe("전체 선택");
+  });
+
+  it("separates real empty, loading, and failed collection", () => {
+    expect(emptyListMessage("", "endConfirmed", "ready")).toBe("대화가 없습니다");
+    expect(emptyListMessage("", "loading", "loading")).toBe("불러오는 중...");
+    expect(emptyListMessage("", "unknown", "failed")).toBe("대화 목록을 불러오지 못했습니다.");
+    expect(emptyListMessage("", "unknown", "failed")).not.toBe("대화가 없습니다");
+    expect(discoverySummary(0, "unknown", "failed")).toBe("대화 목록을 불러오지 못했습니다");
+    expect(DISCOVERY_FAILED_NOTE).toContain("불러오지 못했습니다");
+    expect(DISCOVERY_FAILED_NOTE).not.toMatch(/[A-Za-z]{8,}/);
   });
 });

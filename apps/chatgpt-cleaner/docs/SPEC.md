@@ -114,10 +114,12 @@ The exact signatures may evolve, but compatibility must be explicit and destruct
 
 Goal: progressively enumerate as much of the user's ChatGPT conversation history as the current host implementation can reliably expose.
 
-Implementation may use one or more adapters:
+Visible sidebar `a[href^="/c/"]` links are **not** the account list. They are only the currently rendered slice and may be empty when the sidebar is collapsed or virtualized.
 
-1. **DOM/UI adapter** — safe/default for visible host interaction and action-row injection.
-2. **private-web adapter** — may be investigated/used when required for reliable account-history pagination or mutation, but only behind the adapter boundary.
+Implementation uses:
+
+1. **private-web adapter (primary)** — same-origin `GET /api/auth/session` then paginated `GET /backend-api/conversations` (see `lib/adapters/chatgpt/private-web/EVIDENCE.md`). Token is in-memory only.
+2. **DOM/UI adapter (fallback)** — visible `/c/` links only; never `endConfirmed`.
 
 If a private/undocumented web endpoint is used:
 - document endpoint purpose and assumptions in code/docs;
