@@ -1,47 +1,106 @@
 # Cursor Workflow
 
-This repository is intentionally configured for Cursor Agent as well as human development. GitHub is the operational hub shared with ChatGPT.
+This repository is intentionally configured so the user can work either:
+
+1. entirely in Cursor; or
+2. with Cursor + ChatGPT through the same GitHub state model.
+
+GitHub is the operational hub in both cases. ChatGPT is an optional reviewer/planning agent, not a mandatory hop.
 
 ## Instruction and state sources
 
-Cursor supports root and nested `AGENTS.md` files plus scoped Project Rules under `.cursor/rules/*.mdc`.
+Use these sources together:
 
-Use them together:
+1. `CURRENT.md` — first recovery checkpoint and all active work;
+2. target GitHub Issue — executable task, exact state, review mode, and handoff evidence;
+3. root `AGENTS.md` — repository-wide policy and architecture contract;
+4. `apps/<slug>/AGENTS.md` — app-local boundaries;
+5. `.cursor/rules/00-core.mdc` and `.cursor/rules/05-github-collaboration.mdc` — always applied;
+6. other scoped Cursor rules — matching architecture/design/integration/test work;
+7. app docs and `docs/decisions/` — durable product/engineering truth.
 
-1. `CURRENT.md` is the first recovery checkpoint and lists all active work;
-2. the target GitHub Issue contains the executable task / handoff conversation and exact state transitions;
-3. root `AGENTS.md` is the repository-wide policy and architecture contract;
-4. `apps/<slug>/AGENTS.md` adds app-local context and boundaries;
-5. `.cursor/rules/00-core.mdc` and `.cursor/rules/05-github-collaboration.mdc` always apply;
-6. other scoped rules apply when editing matching app, design, integration, or test files;
-7. detailed product decisions remain in app docs and `docs/decisions/`.
-
-Every app must have a nested `AGENTS.md`, created from `templates/APP_AGENTS.md` and filled with the app identity.
+Every app must have a nested `AGENTS.md`, created from `templates/APP_AGENTS.md`.
 
 Do not add a legacy `.cursorrules` file.
 
-## Expected Cursor start sequence
+## Cursor-only start sequence
 
-For a GitHub-backed task, Cursor must:
+For a new task started directly in Cursor:
 
-1. read `CURRENT.md` and inspect every active-work row for scope collisions;
+1. read `CURRENT.md` and inspect all active scopes;
 2. read `docs/COLLABORATION.md`;
-3. run `pnpm agent:check` when GitHub task state will be changed;
-4. read the target GitHub Issue and determine the latest exact valid `STATE:` / `OWNER:` pair;
-5. if no exact valid state header exists, treat the Issue as DRAFT and do not implement;
-6. read root `AGENTS.md` and matching `.cursor/rules/*.mdc`;
-7. identify the target `apps/<slug>` or explicit shared/root scope;
-8. read app `AGENTS.md`, `SPEC.md`, `PERMISSIONS.md`, and `QA.md` when an app is involved;
-9. inspect the implementation/tests and working-tree state;
-10. ensure the target write scope is disjoint from other RUNNING tasks;
-11. claim the Issue using the standard `STATE: RUNNING / OWNER: CURSOR` comment;
-12. implement the smallest coherent change without touching unrelated apps;
-13. run repository verification and relevant QA;
-14. hand off in the Issue using the mandatory REVIEW evidence format.
+3. run `pnpm agent:check`;
+4. read repository/app rules and relevant SPEC / PERMISSIONS / QA / decisions;
+5. convert the user's request into a self-contained GitHub Task Issue;
+6. choose a `REVIEW_MODE` (`SELF` is the routine default);
+7. add exact headers:
+
+```text
+STATE: READY
+OWNER: CURSOR
+REVIEW_MODE: SELF
+```
+
+8. confirm the write scope is disjoint from other RUNNING tasks;
+9. claim the Issue with `STATE: RUNNING` and explicit branch/base/scope;
+10. implement the smallest coherent change;
+11. run required QA;
+12. post implementation evidence as `STATE: REVIEW`;
+13. perform the review required by the selected review mode;
+14. if SELF passes, post DONE, close the Issue, and update `CURRENT.md`;
+15. continue to the next task without requiring ChatGPT.
 
 `pnpm agent:check` fetches `origin/main` and fails if current HEAD does not contain the latest main baseline. Do not claim a task from a stale base.
 
-If the user starts a complete implementation-level task directly in Cursor, Cursor creates a task Issue with an exact state header before implementation and follows the same sequence. Product/UX/policy ambiguity must become a decision/handoff Issue rather than an implicit guess.
+## Review modes
+
+### SELF — default routine path
+
+Use for objectively testable work that stays within established product/engineering rules.
+
+The implementation pass and review pass must be logically separate. After implementation evidence is posted, Cursor re-reads the Issue and checks the final diff/evidence against Acceptance Criteria, scope, protected behavior, SPEC/decisions, permissions/data behavior, destructive-action safety, QA, residual risk, and NOT_DONE.
+
+Cursor may mark DONE itself only after this second pass succeeds.
+
+### CHATGPT — optional second opinion
+
+Use when the user explicitly wants ChatGPT review or when product/UX/policy/adversarial reasoning would benefit from a separate reviewer.
+
+Cursor hands the Issue to `OWNER: CHATGPT` in REVIEW state. Existing GitHub history is sufficient; no chat-history copy/paste should be required.
+
+### USER — hands-on acceptance
+
+Use when subjective product judgment, visual feel, or manual acceptance by the user is the actual completion gate.
+
+Cursor must provide concise verification instructions and must not infer acceptance from silence.
+
+## Decision escalation
+
+Cursor-only does not mean Cursor may invent important policy.
+
+Move to `DECISION_NEEDED` before continuing ambiguous scope when implementation would materially redefine any of the following without an existing decision:
+
+- product meaning or core UX policy;
+- permissions / host permissions;
+- privacy, data collection, or external transmission;
+- destructive-action semantics;
+- payment/auth/distribution/store-policy behavior;
+- shared architecture or repository-wide operating policy.
+
+After the decision is explicitly recorded, Cursor can resume and still use SELF review unless another mode is requested.
+
+## Expected sequence for an existing GitHub-backed task
+
+1. read `CURRENT.md` and inspect active-work collisions;
+2. read `docs/COLLABORATION.md`;
+3. run `pnpm agent:check` if GitHub task state will change;
+4. read the target Issue and latest exact `STATE` / `OWNER` / `REVIEW_MODE`;
+5. read root/app rules and docs;
+6. inspect implementation/tests and working-tree state;
+7. claim the Issue if READY/CURSOR;
+8. implement without unrelated scope expansion;
+9. run required QA;
+10. post evidence and execute the declared review mode.
 
 ## Rule layout
 
@@ -74,28 +133,36 @@ A GitHub access failure is a workflow blocker for claiming, completing, or handi
 
 Terminal commands and external MCP tools may operate outside `.cursorignore` protections. Never intentionally read or expose secrets just because a tool technically can.
 
-## Prompting Cursor for implementation
+## Minimal prompts
 
-Minimal prompt:
+Cursor-only continuation:
 
 ```text
 Open this repo and continue from CURRENT.md.
-Choose/read the GitHub Issue assigned to CURSOR, inspect other active scopes for collisions, and follow AGENTS.md, docs/COLLABORATION.md, and matching Cursor/app rules.
-Do not broaden scope or permissions.
-Run the required QA and hand the result back in the Issue using the repository handoff format.
+Use the GitHub workflow in docs/COLLABORATION.md.
+If there is no active task, turn my request into a Task Issue and use REVIEW_MODE: SELF unless the task requires a decision or I ask for another reviewer.
+Follow AGENTS.md and matching Cursor/app rules, run the required QA, self-review in a separate pass, then update GitHub state and CURRENT.md.
 ```
 
-The prompt should not need to repeat product policy that is already in GitHub.
+ChatGPT-reviewed task:
 
-For third-party-site automation, also verify adapter compatibility and destructive-action failure behavior.
+```text
+Open this repo and continue from CURRENT.md.
+Use REVIEW_MODE: CHATGPT for this task.
+Implement and QA it, then hand the Issue to ChatGPT with the required evidence.
+```
+
+The prompt should not need to repeat product policy already stored in GitHub.
 
 ## Completion contract
 
-Cursor must not claim a code task is complete without:
+Cursor must not claim a code task complete without:
 
-- an Issue in `STATE: REVIEW` with `OWNER: CHATGPT` (unless explicit delegated review authority exists);
-- commit/PR evidence;
-- successful relevant QA or an explicit failing/not-run result;
-- residual risk and intentionally unfinished work stated explicitly.
+- a GitHub Task Issue;
+- commit/PR evidence as applicable;
+- successful relevant QA or explicit failing/not-run evidence;
+- residual risk and intentionally unfinished work stated explicitly;
+- the review required by `REVIEW_MODE`;
+- DONE/closed state and `CURRENT.md` cleanup when Cursor owns SELF completion.
 
 A visual change also requires light/dark/system review, keyboard focus review, and host-page style-isolation review when injected into another website.
