@@ -16,6 +16,7 @@ Last updated: 2026-08-29
 | Issue | App / scope | State | Owner | Review mode | Branch |
 | --- | --- | --- | --- | --- | --- |
 | #6 | `apps/chatgpt-cleaner` / MVP implementation epic | READY | CURSOR | SELF | parent epic |
+| #11 | `apps/chatgpt-cleaner` / Phase 2 read adapter | RUNNING | CURSOR | SELF | `feat/chatgpt-cleaner-p2-read-adapter` |
 
 Concurrent active tasks are allowed only when their declared write scopes are disjoint. See `docs/COLLABORATION.md`.
 
