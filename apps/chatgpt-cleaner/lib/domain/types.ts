@@ -32,6 +32,7 @@ export interface VaultBookmarkAnchor {
   excerpt: string;
 }
 
+/** Legacy whole-conversation view types kept for migration/test compatibility. */
 export interface VaultConversationSummary {
   id: string;
   title: string;
@@ -68,4 +69,17 @@ export interface VaultMessage {
 export interface VaultConversationDetail extends VaultConversationSummary {
   messages: VaultMessage[];
   anchors: VaultBookmarkAnchor[];
+}
+
+/** Canonical V1 Vault reader model: one independently saved question/answer. */
+export interface VaultItemDetail {
+  id: string;
+  sourceConversationId: string;
+  sourceConversationTitle: string;
+  sourceUrl?: string;
+  sourceMessageId?: string;
+  role: VaultMessage["role"];
+  messageOrdinal: number;
+  updatedAt: string;
+  blocks: VaultMessageBlock[];
 }
