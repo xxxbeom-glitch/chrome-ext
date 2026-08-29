@@ -1,26 +1,9 @@
 import { isExtensionMessage, MESSAGE_VERSION } from "../lib/messaging/schema";
 import {
   focusOrOpenChatgptTab,
+  openCleanupOverlayOnChatgpt,
   openVaultTab,
-  sendTabMessage,
 } from "../lib/runtime/tabs";
-
-async function openCleanupOnChatgpt(): Promise<void> {
-  const tabId = await focusOrOpenChatgptTab();
-  const response = await sendTabMessage(tabId, {
-    version: MESSAGE_VERSION,
-    type: "cleanup.open",
-  });
-
-  if (!response) {
-    // Content script may not be ready yet on a freshly opened tab.
-    await new Promise((resolve) => setTimeout(resolve, 750));
-    await sendTabMessage(tabId, {
-      version: MESSAGE_VERSION,
-      type: "cleanup.open",
-    });
-  }
-}
 
 export default defineBackground(() => {
   browser.runtime.onMessage.addListener((raw, _sender, sendResponse) => {
@@ -33,7 +16,7 @@ export default defineBackground(() => {
       try {
         if (raw.type === "tabs.openChatgpt") {
           if (raw.openCleanup) {
-            await openCleanupOnChatgpt();
+            await openCleanupOverlayOnChatgpt();
           } else {
             await focusOrOpenChatgptTab();
           }
@@ -47,13 +30,18 @@ export default defineBackground(() => {
           return;
         }
 
-        sendResponse({ version: MESSAGE_VERSION, type: "ack", ok: false, error: "unsupported in background" });
+        sendResponse({
+          version: MESSAGE_VERSION,
+          type: "ack",
+          ok: false,
+          error: "지원하지 않는 요청입니다.",
+        });
       } catch (error) {
         sendResponse({
           version: MESSAGE_VERSION,
           type: "ack",
           ok: false,
-          error: error instanceof Error ? error.message : "unknown error",
+          error: error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다.",
         });
       }
     })();

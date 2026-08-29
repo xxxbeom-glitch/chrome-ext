@@ -25,6 +25,7 @@ Concurrent active tasks are allowed only when their declared write scopes are di
 
 - Phases 0–7 engineering complete on `main`.
 - User-facing UI copy: Korean (no i18n framework).
+- Cleanup open recovers missing content scripts via tab reload + readiness poll (#29/#30).
 - Auth: Supabase OAuth PKCE only. Env: `WXT_PUBLIC_SUPABASE_*`.
 - Residual / USER blockers: `apps/chatgpt-cleaner/docs/RESIDUAL.md`.
 
