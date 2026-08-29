@@ -4,6 +4,7 @@ import {
   injectBookmarkControls,
   probeCompatibility,
 } from "../lib/adapters/chatgpt";
+import { createFailClosedMutationAdapter } from "../lib/adapters/chatgpt/mutations";
 import { isExtensionMessage, MESSAGE_VERSION } from "../lib/messaging/schema";
 import { markContentScriptLoaded } from "../lib/runtime/content-marker";
 import { saveLocalSnapshotPreview } from "../lib/storage/local-preview";
@@ -16,10 +17,19 @@ export default defineContentScript({
   cssInjectionMode: "manual",
   main(ctx) {
     markContentScriptLoaded(document);
-    const overlay = createCleanupOverlay(document);
+    const mutationAdapter = createFailClosedMutationAdapter();
+    const overlay = createCleanupOverlay(document, {
+      mutator: mutationAdapter,
+      capabilities: mutationAdapter.capabilities,
+    });
 
     const refreshDiscovery = (): void => {
       const probe = probeCompatibility(document);
+      overlay.setCapabilities({
+        canArchive: probe.capabilities.canArchive && mutationAdapter.capabilities.canArchive,
+        canDelete: probe.capabilities.canDelete && mutationAdapter.capabilities.canDelete,
+      });
+
       if (!probe.capabilities.canDiscoverConversations) {
         overlay.setDiscovery(
           [],
@@ -40,7 +50,7 @@ export default defineContentScript({
       overlay.setDiscovery(
         items,
         page.completeness,
-        "Live DOM discovery (read-only). End of account history is not confirmed from the sidebar alone.",
+        "Live DOM discovery. Archive/Delete remain fail-closed until mutation compatibility is positively proven.",
       );
     };
 
@@ -52,7 +62,6 @@ export default defineContentScript({
         onBookmark: (target) => {
           const captureProbe = probeCompatibility(document);
           if (!captureProbe.capabilities.canCaptureConversation) {
-            console.info("[chatgpt-cleaner] capture unavailable; fail closed");
             return;
           }
           const snapshot = captureCurrentConversation(document);

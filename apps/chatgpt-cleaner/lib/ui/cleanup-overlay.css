@@ -164,6 +164,31 @@
   justify-content: flex-end;
 }
 
+.ce-confirm {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fef2f2;
+}
+
+.ce-confirm[hidden] {
+  display: none !important;
+}
+
+.ce-confirm p {
+  margin: 0;
+  color: #7f1d1d;
+  font-size: 13px;
+}
+
+.ce-confirm__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .ce-button,
 .ce-icon-button {
   min-height: 36px;
