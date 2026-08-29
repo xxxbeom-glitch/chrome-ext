@@ -8,7 +8,9 @@ The repository must support many independent Chrome extensions without turning i
 
 `apps/<slug>` is the product boundary. Each app owns its manifest configuration, entrypoints, tests, documentation, and release artifacts.
 
-`packages/` is reserved for proven shared modules only. A module should not move there until at least two apps use substantially the same behavior.
+`packages/` is normally reserved for proven shared modules. Feature/domain code should not move there until at least two apps use substantially the same behavior.
+
+Repository-mandated foundation packages are explicit exceptions. `packages/design-system` exists from day one because all extension-owned UI is required to share the same theme, typography, accessibility, and token contract.
 
 ## Default app shape
 
@@ -98,11 +100,28 @@ Use `chrome.storage.local` for durable extension-local state unless synchronizat
 
 Version persistent schemas and provide migrations once stored data becomes non-trivial.
 
+## Shared UI foundation
+
+`packages/design-system` is the canonical visual foundation for extension-owned UI.
+
+It owns:
+- Pretendard Variable loading from the pinned local npm package;
+- reference (`--ce-ref-*`) tokens;
+- semantic/theme (`--ce-sys-*`) tokens;
+- shared component-foundation (`--ce-comp-*`) tokens;
+- light/dark/system theme behavior;
+- base focus, selection, scrollbar, and reduced-motion behavior;
+- small theme helpers that are storage-agnostic.
+
+Apps own their theme preference persistence but should not reimplement palette or typography logic.
+
 ## UI isolation
 
-Injected UI must avoid colliding with host CSS. Prefer shadow DOM or strongly scoped styles for complex injected interfaces.
+Injected UI must avoid colliding with host CSS. Prefer Shadow DOM or strongly scoped styles for complex injected interfaces.
 
 Do not depend on host typography, spacing tokens, or class names unless the product explicitly requires native visual integration.
+
+Do not attach `packages/design-system/src/base.css` directly to a third-party document root because it includes an extension-owned reset. Load shared styles inside extension pages or an isolated ShadowRoot.
 
 ## Build output
 
