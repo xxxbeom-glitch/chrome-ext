@@ -1,0 +1,574 @@
+/*
+ * Shared Chrome extension design tokens.
+ * Prefix: --ce- (chrome extension)
+ * Layers: ref -> sys -> comp
+ * App code should prefer --ce-sys-* and --ce-comp-* tokens.
+ */
+
+:root,
+:host {
+  /* -----------------------------
+   * Reference: color palettes
+   * ----------------------------- */
+  --ce-ref-color-white: #ffffff;
+  --ce-ref-color-black: #000000;
+
+  --ce-ref-color-neutral-0: #ffffff;
+  --ce-ref-color-neutral-50: #f8f9fa;
+  --ce-ref-color-neutral-100: #f1f3f5;
+  --ce-ref-color-neutral-200: #e9ecef;
+  --ce-ref-color-neutral-300: #dee2e6;
+  --ce-ref-color-neutral-400: #ced4da;
+  --ce-ref-color-neutral-500: #adb5bd;
+  --ce-ref-color-neutral-600: #868e96;
+  --ce-ref-color-neutral-700: #495057;
+  --ce-ref-color-neutral-800: #343a40;
+  --ce-ref-color-neutral-900: #212529;
+  --ce-ref-color-neutral-950: #121417;
+
+  --ce-ref-color-blue-50: #eff6ff;
+  --ce-ref-color-blue-100: #dbeafe;
+  --ce-ref-color-blue-200: #bfdbfe;
+  --ce-ref-color-blue-300: #93c5fd;
+  --ce-ref-color-blue-400: #60a5fa;
+  --ce-ref-color-blue-500: #3b82f6;
+  --ce-ref-color-blue-600: #2563eb;
+  --ce-ref-color-blue-700: #1d4ed8;
+  --ce-ref-color-blue-800: #1e40af;
+  --ce-ref-color-blue-900: #1e3a8a;
+
+  --ce-ref-color-red-50: #fef2f2;
+  --ce-ref-color-red-100: #fee2e2;
+  --ce-ref-color-red-200: #fecaca;
+  --ce-ref-color-red-400: #f87171;
+  --ce-ref-color-red-500: #ef4444;
+  --ce-ref-color-red-600: #dc2626;
+  --ce-ref-color-red-700: #b91c1c;
+  --ce-ref-color-red-900: #7f1d1d;
+
+  --ce-ref-color-green-50: #f0fdf4;
+  --ce-ref-color-green-100: #dcfce7;
+  --ce-ref-color-green-200: #bbf7d0;
+  --ce-ref-color-green-400: #4ade80;
+  --ce-ref-color-green-500: #22c55e;
+  --ce-ref-color-green-600: #16a34a;
+  --ce-ref-color-green-700: #15803d;
+  --ce-ref-color-green-900: #14532d;
+
+  --ce-ref-color-amber-50: #fffbeb;
+  --ce-ref-color-amber-100: #fef3c7;
+  --ce-ref-color-amber-200: #fde68a;
+  --ce-ref-color-amber-400: #fbbf24;
+  --ce-ref-color-amber-500: #f59e0b;
+  --ce-ref-color-amber-600: #d97706;
+  --ce-ref-color-amber-700: #b45309;
+  --ce-ref-color-amber-900: #78350f;
+
+  --ce-ref-color-cyan-50: #ecfeff;
+  --ce-ref-color-cyan-100: #cffafe;
+  --ce-ref-color-cyan-200: #a5f3fc;
+  --ce-ref-color-cyan-400: #22d3ee;
+  --ce-ref-color-cyan-500: #06b6d4;
+  --ce-ref-color-cyan-600: #0891b2;
+  --ce-ref-color-cyan-700: #0e7490;
+  --ce-ref-color-cyan-900: #164e63;
+
+  /* -----------------------------
+   * Reference: typography
+   * ----------------------------- */
+  --ce-ref-font-family-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+  --ce-ref-font-family-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+
+  --ce-ref-font-size-11: 0.6875rem;
+  --ce-ref-font-size-12: 0.75rem;
+  --ce-ref-font-size-13: 0.8125rem;
+  --ce-ref-font-size-14: 0.875rem;
+  --ce-ref-font-size-16: 1rem;
+  --ce-ref-font-size-18: 1.125rem;
+  --ce-ref-font-size-20: 1.25rem;
+  --ce-ref-font-size-24: 1.5rem;
+  --ce-ref-font-size-28: 1.75rem;
+  --ce-ref-font-size-32: 2rem;
+
+  --ce-ref-line-height-16: 1rem;
+  --ce-ref-line-height-18: 1.125rem;
+  --ce-ref-line-height-20: 1.25rem;
+  --ce-ref-line-height-22: 1.375rem;
+  --ce-ref-line-height-24: 1.5rem;
+  --ce-ref-line-height-26: 1.625rem;
+  --ce-ref-line-height-28: 1.75rem;
+  --ce-ref-line-height-32: 2rem;
+  --ce-ref-line-height-36: 2.25rem;
+  --ce-ref-line-height-40: 2.5rem;
+
+  --ce-ref-font-weight-regular: 400;
+  --ce-ref-font-weight-medium: 500;
+  --ce-ref-font-weight-semibold: 600;
+  --ce-ref-font-weight-bold: 700;
+
+  --ce-ref-letter-spacing-tight: -0.0125em;
+  --ce-ref-letter-spacing-normal: 0;
+  --ce-ref-letter-spacing-wide: 0.01em;
+
+  /* -----------------------------
+   * Reference: spacing and sizing
+   * ----------------------------- */
+  --ce-ref-space-0: 0;
+  --ce-ref-space-1: 1px;
+  --ce-ref-space-2: 2px;
+  --ce-ref-space-4: 4px;
+  --ce-ref-space-6: 6px;
+  --ce-ref-space-8: 8px;
+  --ce-ref-space-10: 10px;
+  --ce-ref-space-12: 12px;
+  --ce-ref-space-16: 16px;
+  --ce-ref-space-20: 20px;
+  --ce-ref-space-24: 24px;
+  --ce-ref-space-32: 32px;
+  --ce-ref-space-40: 40px;
+  --ce-ref-space-48: 48px;
+  --ce-ref-space-64: 64px;
+
+  --ce-ref-size-12: 12px;
+  --ce-ref-size-14: 14px;
+  --ce-ref-size-16: 16px;
+  --ce-ref-size-18: 18px;
+  --ce-ref-size-20: 20px;
+  --ce-ref-size-24: 24px;
+  --ce-ref-size-28: 28px;
+  --ce-ref-size-32: 32px;
+  --ce-ref-size-36: 36px;
+  --ce-ref-size-40: 40px;
+  --ce-ref-size-44: 44px;
+  --ce-ref-size-48: 48px;
+
+  /* -----------------------------
+   * Reference: radius and borders
+   * ----------------------------- */
+  --ce-ref-radius-none: 0;
+  --ce-ref-radius-xs: 4px;
+  --ce-ref-radius-sm: 6px;
+  --ce-ref-radius-md: 8px;
+  --ce-ref-radius-lg: 12px;
+  --ce-ref-radius-xl: 16px;
+  --ce-ref-radius-2xl: 20px;
+  --ce-ref-radius-full: 9999px;
+
+  --ce-ref-border-width-1: 1px;
+  --ce-ref-border-width-2: 2px;
+
+  /* -----------------------------
+   * Reference: motion
+   * ----------------------------- */
+  --ce-ref-duration-instant: 0ms;
+  --ce-ref-duration-fast: 100ms;
+  --ce-ref-duration-normal: 160ms;
+  --ce-ref-duration-slow: 240ms;
+  --ce-ref-duration-slower: 320ms;
+
+  --ce-ref-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ce-ref-ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+  --ce-ref-ease-enter: cubic-bezier(0, 0, 0, 1);
+  --ce-ref-ease-exit: cubic-bezier(0.3, 0, 1, 1);
+
+  /* -----------------------------
+   * Reference: z-index
+   * ----------------------------- */
+  --ce-ref-z-base: 0;
+  --ce-ref-z-sticky: 100;
+  --ce-ref-z-dropdown: 300;
+  --ce-ref-z-popover: 400;
+  --ce-ref-z-overlay: 500;
+  --ce-ref-z-dialog: 600;
+  --ce-ref-z-toast: 700;
+  --ce-ref-z-tooltip: 800;
+
+  /* -----------------------------
+   * System: typography roles
+   * ----------------------------- */
+  --ce-sys-font-family-body: var(--ce-ref-font-family-sans);
+  --ce-sys-font-family-code: var(--ce-ref-font-family-mono);
+
+  --ce-sys-type-caption-size: var(--ce-ref-font-size-12);
+  --ce-sys-type-caption-line-height: var(--ce-ref-line-height-16);
+  --ce-sys-type-caption-weight: var(--ce-ref-font-weight-regular);
+
+  --ce-sys-type-label-sm-size: var(--ce-ref-font-size-12);
+  --ce-sys-type-label-sm-line-height: var(--ce-ref-line-height-16);
+  --ce-sys-type-label-sm-weight: var(--ce-ref-font-weight-medium);
+
+  --ce-sys-type-label-md-size: var(--ce-ref-font-size-13);
+  --ce-sys-type-label-md-line-height: var(--ce-ref-line-height-18);
+  --ce-sys-type-label-md-weight: var(--ce-ref-font-weight-medium);
+
+  --ce-sys-type-body-sm-size: var(--ce-ref-font-size-13);
+  --ce-sys-type-body-sm-line-height: var(--ce-ref-line-height-20);
+  --ce-sys-type-body-sm-weight: var(--ce-ref-font-weight-regular);
+
+  --ce-sys-type-body-md-size: var(--ce-ref-font-size-14);
+  --ce-sys-type-body-md-line-height: var(--ce-ref-line-height-20);
+  --ce-sys-type-body-md-weight: var(--ce-ref-font-weight-regular);
+
+  --ce-sys-type-body-lg-size: var(--ce-ref-font-size-16);
+  --ce-sys-type-body-lg-line-height: var(--ce-ref-line-height-24);
+  --ce-sys-type-body-lg-weight: var(--ce-ref-font-weight-regular);
+
+  --ce-sys-type-title-sm-size: var(--ce-ref-font-size-16);
+  --ce-sys-type-title-sm-line-height: var(--ce-ref-line-height-24);
+  --ce-sys-type-title-sm-weight: var(--ce-ref-font-weight-semibold);
+
+  --ce-sys-type-title-md-size: var(--ce-ref-font-size-18);
+  --ce-sys-type-title-md-line-height: var(--ce-ref-line-height-26);
+  --ce-sys-type-title-md-weight: var(--ce-ref-font-weight-semibold);
+
+  --ce-sys-type-title-lg-size: var(--ce-ref-font-size-20);
+  --ce-sys-type-title-lg-line-height: var(--ce-ref-line-height-28);
+  --ce-sys-type-title-lg-weight: var(--ce-ref-font-weight-bold);
+
+  --ce-sys-type-display-sm-size: var(--ce-ref-font-size-24);
+  --ce-sys-type-display-sm-line-height: var(--ce-ref-line-height-32);
+  --ce-sys-type-display-sm-weight: var(--ce-ref-font-weight-bold);
+
+  --ce-sys-type-display-md-size: var(--ce-ref-font-size-28);
+  --ce-sys-type-display-md-line-height: var(--ce-ref-line-height-36);
+  --ce-sys-type-display-md-weight: var(--ce-ref-font-weight-bold);
+
+  --ce-sys-type-display-lg-size: var(--ce-ref-font-size-32);
+  --ce-sys-type-display-lg-line-height: var(--ce-ref-line-height-40);
+  --ce-sys-type-display-lg-weight: var(--ce-ref-font-weight-bold);
+
+  /* -----------------------------
+   * System: layout roles
+   * ----------------------------- */
+  --ce-sys-space-xxs: var(--ce-ref-space-2);
+  --ce-sys-space-xs: var(--ce-ref-space-4);
+  --ce-sys-space-sm: var(--ce-ref-space-8);
+  --ce-sys-space-md: var(--ce-ref-space-12);
+  --ce-sys-space-lg: var(--ce-ref-space-16);
+  --ce-sys-space-xl: var(--ce-ref-space-24);
+  --ce-sys-space-2xl: var(--ce-ref-space-32);
+  --ce-sys-space-3xl: var(--ce-ref-space-48);
+
+  --ce-sys-radius-control: var(--ce-ref-radius-sm);
+  --ce-sys-radius-surface: var(--ce-ref-radius-md);
+  --ce-sys-radius-elevated: var(--ce-ref-radius-lg);
+  --ce-sys-radius-round: var(--ce-ref-radius-full);
+
+  --ce-sys-border-width-default: var(--ce-ref-border-width-1);
+  --ce-sys-border-width-focus: var(--ce-ref-border-width-2);
+
+  --ce-sys-motion-fast: var(--ce-ref-duration-fast) var(--ce-ref-ease-standard);
+  --ce-sys-motion-normal: var(--ce-ref-duration-normal) var(--ce-ref-ease-standard);
+  --ce-sys-motion-slow: var(--ce-ref-duration-slow) var(--ce-ref-ease-standard);
+
+  /* -----------------------------
+   * Component foundation
+   * ----------------------------- */
+  --ce-comp-icon-size-xs: var(--ce-ref-size-12);
+  --ce-comp-icon-size-sm: var(--ce-ref-size-14);
+  --ce-comp-icon-size-md: var(--ce-ref-size-16);
+  --ce-comp-icon-size-lg: var(--ce-ref-size-20);
+  --ce-comp-icon-size-xl: var(--ce-ref-size-24);
+
+  --ce-comp-button-height-sm: var(--ce-ref-size-28);
+  --ce-comp-button-height-md: var(--ce-ref-size-32);
+  --ce-comp-button-height-lg: var(--ce-ref-size-40);
+  --ce-comp-button-padding-inline-sm: var(--ce-ref-space-8);
+  --ce-comp-button-padding-inline-md: var(--ce-ref-space-12);
+  --ce-comp-button-padding-inline-lg: var(--ce-ref-space-16);
+  --ce-comp-button-gap: var(--ce-ref-space-6);
+  --ce-comp-button-radius: var(--ce-sys-radius-control);
+
+  --ce-comp-input-height-sm: var(--ce-ref-size-28);
+  --ce-comp-input-height-md: var(--ce-ref-size-32);
+  --ce-comp-input-height-lg: var(--ce-ref-size-40);
+  --ce-comp-input-padding-inline: var(--ce-ref-space-10);
+  --ce-comp-input-radius: var(--ce-sys-radius-control);
+
+  --ce-comp-checkbox-size: var(--ce-ref-size-16);
+  --ce-comp-radio-size: var(--ce-ref-size-16);
+  --ce-comp-switch-width: 32px;
+  --ce-comp-switch-height: 18px;
+  --ce-comp-switch-thumb-size: 14px;
+
+  --ce-comp-card-padding-sm: var(--ce-ref-space-12);
+  --ce-comp-card-padding-md: var(--ce-ref-space-16);
+  --ce-comp-card-padding-lg: var(--ce-ref-space-20);
+  --ce-comp-card-radius: var(--ce-sys-radius-surface);
+
+  --ce-comp-row-height-dense: 32px;
+  --ce-comp-row-height-default: 40px;
+  --ce-comp-row-height-comfortable: 48px;
+
+  --ce-comp-popup-width-sm: 320px;
+  --ce-comp-popup-width-md: 360px;
+  --ce-comp-popup-width-lg: 400px;
+  --ce-comp-popup-padding: var(--ce-ref-space-16);
+
+  --ce-comp-dialog-width-sm: 360px;
+  --ce-comp-dialog-width-md: 480px;
+  --ce-comp-dialog-width-lg: 640px;
+
+  /* -----------------------------
+   * System: light theme colors
+   * ----------------------------- */
+  color-scheme: light;
+
+  --ce-sys-color-bg-canvas: var(--ce-ref-color-neutral-50);
+  --ce-sys-color-bg-surface: var(--ce-ref-color-neutral-0);
+  --ce-sys-color-bg-surface-subtle: var(--ce-ref-color-neutral-100);
+  --ce-sys-color-bg-elevated: var(--ce-ref-color-neutral-0);
+  --ce-sys-color-bg-hover: rgba(18, 20, 23, 0.05);
+  --ce-sys-color-bg-pressed: rgba(18, 20, 23, 0.09);
+  --ce-sys-color-bg-selected: var(--ce-ref-color-blue-50);
+  --ce-sys-color-bg-disabled: var(--ce-ref-color-neutral-100);
+  --ce-sys-color-bg-overlay: rgba(18, 20, 23, 0.48);
+
+  --ce-sys-color-text-primary: var(--ce-ref-color-neutral-950);
+  --ce-sys-color-text-secondary: var(--ce-ref-color-neutral-700);
+  --ce-sys-color-text-tertiary: var(--ce-ref-color-neutral-600);
+  --ce-sys-color-text-disabled: var(--ce-ref-color-neutral-500);
+  --ce-sys-color-text-inverse: var(--ce-ref-color-white);
+  --ce-sys-color-text-link: var(--ce-ref-color-blue-700);
+  --ce-sys-color-text-link-hover: var(--ce-ref-color-blue-800);
+
+  --ce-sys-color-icon-primary: var(--ce-ref-color-neutral-800);
+  --ce-sys-color-icon-secondary: var(--ce-ref-color-neutral-600);
+  --ce-sys-color-icon-disabled: var(--ce-ref-color-neutral-400);
+
+  --ce-sys-color-border-subtle: var(--ce-ref-color-neutral-200);
+  --ce-sys-color-border-default: var(--ce-ref-color-neutral-300);
+  --ce-sys-color-border-strong: var(--ce-ref-color-neutral-500);
+  --ce-sys-color-border-focus: var(--ce-ref-color-blue-600);
+  --ce-sys-color-divider: var(--ce-ref-color-neutral-200);
+
+  --ce-sys-color-action-primary: var(--ce-ref-color-blue-600);
+  --ce-sys-color-action-primary-hover: var(--ce-ref-color-blue-700);
+  --ce-sys-color-action-primary-pressed: var(--ce-ref-color-blue-800);
+  --ce-sys-color-action-primary-text: var(--ce-ref-color-white);
+  --ce-sys-color-action-secondary: var(--ce-ref-color-neutral-0);
+  --ce-sys-color-action-secondary-hover: var(--ce-ref-color-neutral-100);
+  --ce-sys-color-action-secondary-pressed: var(--ce-ref-color-neutral-200);
+  --ce-sys-color-action-secondary-text: var(--ce-ref-color-neutral-900);
+
+  --ce-sys-color-status-info-bg: var(--ce-ref-color-blue-50);
+  --ce-sys-color-status-info-border: var(--ce-ref-color-blue-200);
+  --ce-sys-color-status-info-text: var(--ce-ref-color-blue-800);
+  --ce-sys-color-status-info-solid: var(--ce-ref-color-blue-600);
+
+  --ce-sys-color-status-success-bg: var(--ce-ref-color-green-50);
+  --ce-sys-color-status-success-border: var(--ce-ref-color-green-200);
+  --ce-sys-color-status-success-text: var(--ce-ref-color-green-700);
+  --ce-sys-color-status-success-solid: var(--ce-ref-color-green-600);
+
+  --ce-sys-color-status-warning-bg: var(--ce-ref-color-amber-50);
+  --ce-sys-color-status-warning-border: var(--ce-ref-color-amber-200);
+  --ce-sys-color-status-warning-text: var(--ce-ref-color-amber-700);
+  --ce-sys-color-status-warning-solid: var(--ce-ref-color-amber-600);
+
+  --ce-sys-color-status-danger-bg: var(--ce-ref-color-red-50);
+  --ce-sys-color-status-danger-border: var(--ce-ref-color-red-200);
+  --ce-sys-color-status-danger-text: var(--ce-ref-color-red-700);
+  --ce-sys-color-status-danger-solid: var(--ce-ref-color-red-600);
+  --ce-sys-color-status-danger-hover: var(--ce-ref-color-red-700);
+  --ce-sys-color-status-danger-pressed: var(--ce-ref-color-red-900);
+
+  --ce-sys-color-input-bg: var(--ce-ref-color-neutral-0);
+  --ce-sys-color-input-border: var(--ce-ref-color-neutral-300);
+  --ce-sys-color-input-border-hover: var(--ce-ref-color-neutral-500);
+  --ce-sys-color-input-border-focus: var(--ce-ref-color-blue-600);
+  --ce-sys-color-input-placeholder: var(--ce-ref-color-neutral-500);
+
+  --ce-sys-color-selection-bg: var(--ce-ref-color-blue-100);
+  --ce-sys-color-selection-text: var(--ce-ref-color-neutral-950);
+  --ce-sys-color-focus-ring: rgba(37, 99, 235, 0.28);
+  --ce-sys-color-scrollbar-thumb: rgba(73, 80, 87, 0.34);
+  --ce-sys-color-scrollbar-thumb-hover: rgba(73, 80, 87, 0.5);
+
+  --ce-sys-shadow-sm: 0 1px 2px rgba(18, 20, 23, 0.08);
+  --ce-sys-shadow-md: 0 6px 18px rgba(18, 20, 23, 0.12), 0 1px 3px rgba(18, 20, 23, 0.08);
+  --ce-sys-shadow-lg: 0 14px 36px rgba(18, 20, 23, 0.16), 0 3px 8px rgba(18, 20, 23, 0.08);
+
+  --ce-sys-opacity-disabled: 0.48;
+  --ce-sys-focus-ring-size: 3px;
+  --ce-sys-focus-ring-offset: 2px;
+}
+
+/* Explicit light mode keeps the light mappings above. */
+:root[data-ce-theme="light"],
+:host([data-ce-theme="light"]) {
+  color-scheme: light;
+}
+
+/* Explicit dark mode. */
+:root[data-ce-theme="dark"],
+:host([data-ce-theme="dark"]) {
+  color-scheme: dark;
+
+  --ce-sys-color-bg-canvas: #101214;
+  --ce-sys-color-bg-surface: #17191c;
+  --ce-sys-color-bg-surface-subtle: #1f2226;
+  --ce-sys-color-bg-elevated: #202328;
+  --ce-sys-color-bg-hover: rgba(255, 255, 255, 0.06);
+  --ce-sys-color-bg-pressed: rgba(255, 255, 255, 0.1);
+  --ce-sys-color-bg-selected: rgba(59, 130, 246, 0.16);
+  --ce-sys-color-bg-disabled: #24272b;
+  --ce-sys-color-bg-overlay: rgba(0, 0, 0, 0.64);
+
+  --ce-sys-color-text-primary: #f5f6f7;
+  --ce-sys-color-text-secondary: #c8cdd2;
+  --ce-sys-color-text-tertiary: #9aa1a9;
+  --ce-sys-color-text-disabled: #6f767e;
+  --ce-sys-color-text-inverse: #121417;
+  --ce-sys-color-text-link: var(--ce-ref-color-blue-300);
+  --ce-sys-color-text-link-hover: var(--ce-ref-color-blue-200);
+
+  --ce-sys-color-icon-primary: #e6e9ec;
+  --ce-sys-color-icon-secondary: #a8afb7;
+  --ce-sys-color-icon-disabled: #646b73;
+
+  --ce-sys-color-border-subtle: #2a2e33;
+  --ce-sys-color-border-default: #353a40;
+  --ce-sys-color-border-strong: #555c64;
+  --ce-sys-color-border-focus: var(--ce-ref-color-blue-400);
+  --ce-sys-color-divider: #2a2e33;
+
+  --ce-sys-color-action-primary: var(--ce-ref-color-blue-500);
+  --ce-sys-color-action-primary-hover: var(--ce-ref-color-blue-400);
+  --ce-sys-color-action-primary-pressed: var(--ce-ref-color-blue-600);
+  --ce-sys-color-action-primary-text: var(--ce-ref-color-white);
+  --ce-sys-color-action-secondary: #23262b;
+  --ce-sys-color-action-secondary-hover: #2c3035;
+  --ce-sys-color-action-secondary-pressed: #363b41;
+  --ce-sys-color-action-secondary-text: #f1f3f5;
+
+  --ce-sys-color-status-info-bg: rgba(59, 130, 246, 0.14);
+  --ce-sys-color-status-info-border: rgba(96, 165, 250, 0.36);
+  --ce-sys-color-status-info-text: #bfdbfe;
+  --ce-sys-color-status-info-solid: var(--ce-ref-color-blue-400);
+
+  --ce-sys-color-status-success-bg: rgba(34, 197, 94, 0.13);
+  --ce-sys-color-status-success-border: rgba(74, 222, 128, 0.34);
+  --ce-sys-color-status-success-text: #bbf7d0;
+  --ce-sys-color-status-success-solid: var(--ce-ref-color-green-400);
+
+  --ce-sys-color-status-warning-bg: rgba(245, 158, 11, 0.14);
+  --ce-sys-color-status-warning-border: rgba(251, 191, 36, 0.34);
+  --ce-sys-color-status-warning-text: #fde68a;
+  --ce-sys-color-status-warning-solid: var(--ce-ref-color-amber-400);
+
+  --ce-sys-color-status-danger-bg: rgba(239, 68, 68, 0.14);
+  --ce-sys-color-status-danger-border: rgba(248, 113, 113, 0.36);
+  --ce-sys-color-status-danger-text: #fecaca;
+  --ce-sys-color-status-danger-solid: var(--ce-ref-color-red-400);
+  --ce-sys-color-status-danger-hover: var(--ce-ref-color-red-500);
+  --ce-sys-color-status-danger-pressed: var(--ce-ref-color-red-600);
+
+  --ce-sys-color-input-bg: #17191c;
+  --ce-sys-color-input-border: #3a3f45;
+  --ce-sys-color-input-border-hover: #5a6169;
+  --ce-sys-color-input-border-focus: var(--ce-ref-color-blue-400);
+  --ce-sys-color-input-placeholder: #777f87;
+
+  --ce-sys-color-selection-bg: rgba(59, 130, 246, 0.28);
+  --ce-sys-color-selection-text: #f5f6f7;
+  --ce-sys-color-focus-ring: rgba(96, 165, 250, 0.34);
+  --ce-sys-color-scrollbar-thumb: rgba(206, 212, 218, 0.26);
+  --ce-sys-color-scrollbar-thumb-hover: rgba(206, 212, 218, 0.42);
+
+  --ce-sys-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.34);
+  --ce-sys-shadow-md: 0 8px 22px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
+  --ce-sys-shadow-lg: 0 18px 44px rgba(0, 0, 0, 0.5), 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* System mode: dark OS preference unless light was explicitly forced. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-ce-theme="light"]),
+  :host(:not([data-ce-theme="light"])) {
+    color-scheme: dark;
+
+    --ce-sys-color-bg-canvas: #101214;
+    --ce-sys-color-bg-surface: #17191c;
+    --ce-sys-color-bg-surface-subtle: #1f2226;
+    --ce-sys-color-bg-elevated: #202328;
+    --ce-sys-color-bg-hover: rgba(255, 255, 255, 0.06);
+    --ce-sys-color-bg-pressed: rgba(255, 255, 255, 0.1);
+    --ce-sys-color-bg-selected: rgba(59, 130, 246, 0.16);
+    --ce-sys-color-bg-disabled: #24272b;
+    --ce-sys-color-bg-overlay: rgba(0, 0, 0, 0.64);
+
+    --ce-sys-color-text-primary: #f5f6f7;
+    --ce-sys-color-text-secondary: #c8cdd2;
+    --ce-sys-color-text-tertiary: #9aa1a9;
+    --ce-sys-color-text-disabled: #6f767e;
+    --ce-sys-color-text-inverse: #121417;
+    --ce-sys-color-text-link: var(--ce-ref-color-blue-300);
+    --ce-sys-color-text-link-hover: var(--ce-ref-color-blue-200);
+
+    --ce-sys-color-icon-primary: #e6e9ec;
+    --ce-sys-color-icon-secondary: #a8afb7;
+    --ce-sys-color-icon-disabled: #646b73;
+
+    --ce-sys-color-border-subtle: #2a2e33;
+    --ce-sys-color-border-default: #353a40;
+    --ce-sys-color-border-strong: #555c64;
+    --ce-sys-color-border-focus: var(--ce-ref-color-blue-400);
+    --ce-sys-color-divider: #2a2e33;
+
+    --ce-sys-color-action-primary: var(--ce-ref-color-blue-500);
+    --ce-sys-color-action-primary-hover: var(--ce-ref-color-blue-400);
+    --ce-sys-color-action-primary-pressed: var(--ce-ref-color-blue-600);
+    --ce-sys-color-action-primary-text: var(--ce-ref-color-white);
+    --ce-sys-color-action-secondary: #23262b;
+    --ce-sys-color-action-secondary-hover: #2c3035;
+    --ce-sys-color-action-secondary-pressed: #363b41;
+    --ce-sys-color-action-secondary-text: #f1f3f5;
+
+    --ce-sys-color-status-info-bg: rgba(59, 130, 246, 0.14);
+    --ce-sys-color-status-info-border: rgba(96, 165, 250, 0.36);
+    --ce-sys-color-status-info-text: #bfdbfe;
+    --ce-sys-color-status-info-solid: var(--ce-ref-color-blue-400);
+
+    --ce-sys-color-status-success-bg: rgba(34, 197, 94, 0.13);
+    --ce-sys-color-status-success-border: rgba(74, 222, 128, 0.34);
+    --ce-sys-color-status-success-text: #bbf7d0;
+    --ce-sys-color-status-success-solid: var(--ce-ref-color-green-400);
+
+    --ce-sys-color-status-warning-bg: rgba(245, 158, 11, 0.14);
+    --ce-sys-color-status-warning-border: rgba(251, 191, 36, 0.34);
+    --ce-sys-color-status-warning-text: #fde68a;
+    --ce-sys-color-status-warning-solid: var(--ce-ref-color-amber-400);
+
+    --ce-sys-color-status-danger-bg: rgba(239, 68, 68, 0.14);
+    --ce-sys-color-status-danger-border: rgba(248, 113, 113, 0.36);
+    --ce-sys-color-status-danger-text: #fecaca;
+    --ce-sys-color-status-danger-solid: var(--ce-ref-color-red-400);
+    --ce-sys-color-status-danger-hover: var(--ce-ref-color-red-500);
+    --ce-sys-color-status-danger-pressed: var(--ce-ref-color-red-600);
+
+    --ce-sys-color-input-bg: #17191c;
+    --ce-sys-color-input-border: #3a3f45;
+    --ce-sys-color-input-border-hover: #5a6169;
+    --ce-sys-color-input-border-focus: var(--ce-ref-color-blue-400);
+    --ce-sys-color-input-placeholder: #777f87;
+
+    --ce-sys-color-selection-bg: rgba(59, 130, 246, 0.28);
+    --ce-sys-color-selection-text: #f5f6f7;
+    --ce-sys-color-focus-ring: rgba(96, 165, 250, 0.34);
+    --ce-sys-color-scrollbar-thumb: rgba(206, 212, 218, 0.26);
+    --ce-sys-color-scrollbar-thumb-hover: rgba(206, 212, 218, 0.42);
+
+    --ce-sys-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.34);
+    --ce-sys-shadow-md: 0 8px 22px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
+    --ce-sys-shadow-lg: 0 18px 44px rgba(0, 0, 0, 0.5), 0 4px 10px rgba(0, 0, 0, 0.3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root,
+  :host {
+    --ce-sys-motion-fast: 0ms linear;
+    --ce-sys-motion-normal: 0ms linear;
+    --ce-sys-motion-slow: 0ms linear;
+  }
+}
