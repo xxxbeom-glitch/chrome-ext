@@ -17,24 +17,23 @@ Last updated: 2026-08-29
 | --- | --- | --- | --- | --- | --- |
 | #6 | `apps/chatgpt-cleaner` / MVP implementation epic | READY | CURSOR | SELF | parent epic |
 | #15 | `apps/chatgpt-cleaner` / live Archive-Delete binding | BLOCKED | USER | USER | n/a |
-| #16 | `apps/chatgpt-cleaner` / Phase 4 local Vault | RUNNING | CURSOR | SELF | `feat/chatgpt-cleaner-p4-local-vault` |
 
 Concurrent active tasks are allowed only when their declared write scopes are disjoint. See `docs/COLLABORATION.md`.
 
 ## Current repository baseline
 
-- Phases 0–3 engineering on `main`: WXT bootstrap, UI shell, read-only adapter, fail-closed cleanup engine.
-- Live ChatGPT Archive/Delete host binding is intentionally unbound (fail-closed).
+- Phases 0–4 on `main`: bootstrap, UI shell, read adapter, fail-closed cleanup engine, local Vault domain.
+- Live ChatGPT Archive/Delete host binding remains unbound (#15).
 
 ## Next planned product work
 
-1. Continue Phase 4 local Vault domain while #15 remains BLOCKED.
-2. Phases 5–7 afterward; interrupt only for additional stop conditions.
+1. Phase 5 Supabase schema/auth integration (local-first; real project activation may BLOCK).
+2. Phases 6–7 afterward.
 
 ## Blockers / decisions needed
 
-- **#15 BLOCKED (USER):** live ChatGPT Archive/Delete binding needs disposable-conversation smoke and/or approval to investigate private-web mutation endpoints. Recommendation recorded on the Issue (defer live mutation; continue Vault phases).
-- Supabase/Google setup may BLOCK Phase 5 activation only.
+- **#15 BLOCKED (USER):** live ChatGPT Archive/Delete binding. Recommendation on Issue: defer while Vault phases continue; choose A/B/C.
+- Phase 5 may later BLOCK on Supabase/Google project setup.
 - Repository is public; keep Issues/PRs public-safe.
 
 ## Recovery rule
