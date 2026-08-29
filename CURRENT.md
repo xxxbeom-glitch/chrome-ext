@@ -35,15 +35,17 @@ Concurrent active tasks are allowed only when their declared write scopes are di
 ## Next verification
 
 1. Automated: typecheck/unit/build/E2E/CI for #15 + #36.
-2. Supabase: apply `vault_items` migration with RLS; legacy Vault tables remain for rollback.
+2. Supabase: `vault_items` migration with RLS is applied; legacy Vault tables remain for rollback.
 3. USER: rebuild/reload extension and verify one assistant answer and one user question save independently.
 4. USER: use disposable ChatGPT conversations to smoke one Archive and one Delete.
 5. USER: finish/verify Google OAuth + second-profile cloud restore gate (#20).
 
-## Safety / blockers
+## Blockers / decisions needed
 
-- **#15:** implementation may proceed, but actual Delete verification must use an intentionally disposable conversation and explicit user confirmation.
+- **#15:** code binding is in progress; actual Archive/Delete verification still requires intentionally disposable conversations and explicit Delete confirmation.
+- **#36:** message-level implementation is in progress; live assistant/user message save smoke remains required after automated QA.
 - **#20:** real OAuth/session/second-profile restore still requires USER environment.
+- **#32:** generated media/file binary backup is intentionally deferred until the message-level MVP is stable.
 - Repository is public; keep Issues/PRs public-safe and never commit private chat data, screenshots, tokens, cookies, exports, or secrets.
 
 ## Recovery rule
