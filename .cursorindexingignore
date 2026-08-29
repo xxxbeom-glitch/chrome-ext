@@ -1,0 +1,9 @@
+# Generated reports and snapshots stay accessible to tools when needed,
+# but should not pollute semantic code search.
+**/coverage/**
+**/test-results/**
+**/playwright-report/**
+**/__snapshots__/**
+**/*.snap
+**/*.map
+**/fixtures/generated/**
