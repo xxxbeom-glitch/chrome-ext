@@ -18,6 +18,7 @@ Last updated: 2026-08-29
 | #6 | `apps/chatgpt-cleaner` / MVP implementation epic | READY | CURSOR | SELF | parent epic |
 | #15 | `apps/chatgpt-cleaner` / live Archive-Delete binding | BLOCKED | USER | USER | n/a |
 | #20 | `apps/chatgpt-cleaner` / Google Auth provider setup | BLOCKED | USER | USER | n/a |
+| #31 | `apps/chatgpt-cleaner` / reliable conversation history discovery | RUNNING | CURSOR | SELF | `fix/chatgpt-history-discovery` |
 
 Concurrent active tasks are allowed only when their declared write scopes are disjoint. See `docs/COLLABORATION.md`.
 
@@ -31,8 +32,8 @@ Concurrent active tasks are allowed only when their declared write scopes are di
 
 ## Next planned product work
 
-1. USER: #20 Google OAuth setup; #15 live Archive/Delete.
-2. After both, close epic #6.
+1. Land #31 history discovery (private-web list + DOM fallback).
+2. USER: #20 Google OAuth setup; #15 live Archive/Delete; signed-in discovery smoke.
 
 ## Blockers / decisions needed
 

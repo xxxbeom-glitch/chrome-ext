@@ -1,5 +1,6 @@
 export { probeCompatibility } from "./compatibility";
 export { discoverConversationsFromDom } from "./discovery";
+export { discoverAccountHistory } from "./account-history";
 export { captureCurrentConversation } from "./snapshot";
 export {
   injectBookmarkControls,

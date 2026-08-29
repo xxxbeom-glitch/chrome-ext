@@ -17,6 +17,7 @@ export interface DiscoveredConversation {
   sourceId: string;
   title: string;
   sourceUrl: string;
+  updatedAt?: string;
 }
 
 export interface DiscoveryPage {

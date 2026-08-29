@@ -3,7 +3,8 @@
  * Keep all host assumptions here; never scatter them through UI/domain code.
  */
 export const CHATGPT_SELECTORS = {
-  conversationLink: 'a[href^="/c/"]',
+  conversationLink:
+    'a[href^="/c/"], a[href^="https://chatgpt.com/c/"], a[href^="https://chat.openai.com/c/"]',
   conversationTitleFallback: "[data-ce-conversation-title], title",
   messageArticle: '[data-message-author-role], [data-testid^="conversation-turn"]',
   messageRole: "data-message-author-role",

@@ -11,6 +11,10 @@ Last updated: 2026-08-29
 - Manifest permissions limited to `storage` + `identity` + chatgpt.com + project Supabase host.
 - Vault renderer uses text nodes + http(s)-only href sanitization.
 
+## Live discovery smoke (USER)
+
+After this build, open ChatGPT while signed in and tap **대화방 정리하기**. Expected: a non-empty list if the account has chats; collapsed sidebar must not show a fake empty account. Cursor cannot complete this signed-in smoke.
+
 ## Still BLOCKED on USER action
 
 | Issue | Why blocked | How Cursor verifies after USER completes |

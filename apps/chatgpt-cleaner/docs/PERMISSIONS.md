@@ -22,7 +22,7 @@
 ## ChatGPT host-access constraints
 
 Host access exists only to deliver the explicit product features:
-- cleanup list/discovery;
+- cleanup list/discovery (including same-origin ChatGPT history requests the page already makes);
 - Archive/Delete initiated by the user;
 - injected bookmark action;
 - current-conversation snapshot capture.
