@@ -3,7 +3,11 @@ description: Non-negotiable repository rules for all work in this Chrome extensi
 alwaysApply: true
 ---
 
-Read and follow @AGENTS.md before making meaningful changes.
+For meaningful work, recover repository state before editing:
+- @CURRENT.md
+- active GitHub Issue referenced by CURRENT
+- @docs/COLLABORATION.md
+- @AGENTS.md
 
 Repository-wide references:
 - @docs/ARCHITECTURE.md
@@ -13,8 +17,10 @@ Repository-wide references:
 - @docs/DEVELOPMENT.md
 - @docs/DESIGN_SYSTEM.md
 - @docs/CURSOR.md
+- @docs/GITHUB_AGENT_SETUP.md
 
 Mandatory behavior:
+- GitHub is the operational collaboration hub; do not use chat history or local scratch state as a substitute for durable task state.
 - Preserve the multi-extension monorepo boundary: products live under `apps/<slug>`.
 - Chrome Manifest V3, TypeScript, WXT, pnpm, Vitest, and Playwright are the repository defaults.
 - Do not broaden permissions, data collection, external transmission, or product scope without documenting it first.
@@ -23,4 +29,6 @@ Mandatory behavior:
 - Keep unrelated extensions unchanged.
 - Use the shared design system for extension-owned UI.
 - Run `pnpm verify:repo` and all relevant QA gates before declaring implementation complete.
+- When changing GitHub task state from Cursor, `pnpm agent:check` must pass first.
+- Follow the Issue ownership/state protocol in `docs/COLLABORATION.md`.
 - If repository rules conflict with an app-local convenience, repository rules win unless the app SPEC explicitly records an approved exception.
