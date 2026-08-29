@@ -1,8 +1,9 @@
 import {
   findAssociatedMessage,
   insertBookmarkControl,
-  locateAssistantActionRows,
+  locateTurnActionRows,
   markBookmarkCompatibility,
+  messageRoleForElement,
 } from "./dom/action-row";
 import {
   BOOKMARK_ATTR,
@@ -19,23 +20,38 @@ export const BOOKMARK_LABELS = {
   failed: "다시 시도",
 } as const;
 
-function anchorKey(row: Element, index: number): string {
-  const message = findAssociatedMessage(row);
-  const messageId = message?.getAttribute(CHATGPT_SELECTORS.messageId);
+function messageIndex(doc: Document, message: Element): number {
+  const messages = Array.from(doc.querySelectorAll(CHATGPT_SELECTORS.messageArticle));
+  const exact = messages.indexOf(message);
+  if (exact >= 0) return exact;
+  const containing = messages.findIndex((candidate) => candidate.contains(message));
+  return containing >= 0 ? containing : 0;
+}
+
+function anchorKey(doc: Document, row: Element, message: Element): string {
+  const messageId = message.getAttribute(CHATGPT_SELECTORS.messageId);
   if (messageId) return `msg:${messageId}`;
-  return `ordinal:${index}`;
+  const role = messageRoleForElement(message);
+  return `${role}:ordinal:${messageIndex(doc, message)}`;
 }
 
 export function locateBookmarkAnchors(doc: Document): BookmarkAnchorTarget[] {
-  return locateAssistantActionRows(doc).map((actionRow, index) => {
+  const targets: BookmarkAnchorTarget[] = [];
+  for (const actionRow of locateTurnActionRows(doc)) {
     const message = findAssociatedMessage(actionRow);
-    const sourceMessageId = message?.getAttribute(CHATGPT_SELECTORS.messageId) ?? undefined;
-    return {
-      key: anchorKey(actionRow, index),
+    if (!message) continue;
+    const role = messageRoleForElement(message);
+    if (role !== "user" && role !== "assistant") continue;
+    const sourceMessageId = message.getAttribute(CHATGPT_SELECTORS.messageId) ?? undefined;
+    targets.push({
+      key: anchorKey(doc, actionRow, message),
       ...(sourceMessageId ? { sourceMessageId } : {}),
       actionRow,
-    };
-  });
+      messageElement: message,
+      role,
+    });
+  }
+  return targets;
 }
 
 export type BookmarkSaveStatus = "idle" | "saving" | "saved" | "failed";
@@ -119,7 +135,10 @@ export function injectBookmarkControls(
   options: InjectBookmarkOptions,
 ): { injected: number; skipped: number } {
   const targets = locateBookmarkAnchors(doc);
-  markBookmarkCompatibility(doc, targets.length);
+  markBookmarkCompatibility(
+    doc,
+    targets.filter((target) => target.role === "assistant").length,
+  );
 
   let injected = 0;
   let skipped = 0;
@@ -132,6 +151,7 @@ export function injectBookmarkControls(
 
     const button = createBookmarkButton(doc);
     button.setAttribute(BOOKMARK_KEY_ATTR, target.key);
+    button.dataset.ceBookmarkRole = target.role;
 
     const control: BookmarkControlHandle = {
       setStatus(status, detail) {
