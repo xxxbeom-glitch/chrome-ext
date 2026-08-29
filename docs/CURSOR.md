@@ -1,36 +1,43 @@
 # Cursor Workflow
 
-This repository is intentionally configured for Cursor Agent as well as human development.
+This repository is intentionally configured for Cursor Agent as well as human development. GitHub is the operational hub shared with ChatGPT.
 
-## Instruction sources
+## Instruction and state sources
 
 Cursor supports root and nested `AGENTS.md` files plus scoped Project Rules under `.cursor/rules/*.mdc`.
 
 Use them together:
 
-1. root `AGENTS.md` is the readable repository-wide policy and architecture contract;
-2. `apps/<slug>/AGENTS.md` adds app-local context and boundaries for that extension;
-3. `.cursor/rules/00-core.mdc` is always applied;
-4. scoped rules apply automatically when editing matching app, design, integration, or test files;
-5. detailed product decisions remain in `apps/<slug>/docs/`.
+1. `CURRENT.md` is the first recovery checkpoint for current state and active work;
+2. the active GitHub Issue contains the executable task / handoff conversation;
+3. root `AGENTS.md` is the repository-wide policy and architecture contract;
+4. `apps/<slug>/AGENTS.md` adds app-local context and boundaries;
+5. `.cursor/rules/00-core.mdc` and `.cursor/rules/05-github-collaboration.mdc` always apply;
+6. other scoped rules apply when editing matching app, design, integration, or test files;
+7. detailed product decisions remain in app docs and `docs/decisions/`.
 
 Every app must have a nested `AGENTS.md`, created from `templates/APP_AGENTS.md` and filled with the app identity.
 
-Do not add a legacy `.cursorrules` file. Keep new Cursor project instructions in focused `.mdc` files or the appropriate root/app `AGENTS.md`.
+Do not add a legacy `.cursorrules` file.
 
 ## Expected Cursor start sequence
 
-For a new task, Cursor should:
+For a GitHub-backed task, Cursor must:
 
-1. read root `AGENTS.md`;
-2. identify the target `apps/<slug>`;
-3. read that app's nested `AGENTS.md`;
-4. read that app's `SPEC.md`, `PERMISSIONS.md`, and `QA.md`;
-5. inspect relevant existing implementation and tests;
-6. state or infer the smallest coherent change boundary;
-7. implement without touching unrelated apps;
-8. run repository verification and relevant QA;
-9. report changed files, checks performed, and any unresolved risk.
+1. read `CURRENT.md`;
+2. read `docs/COLLABORATION.md`;
+3. run `pnpm agent:check` when GitHub task state will be changed;
+4. read the active GitHub Issue and latest state transition comments;
+5. read root `AGENTS.md` and matching `.cursor/rules/*.mdc`;
+6. identify the target `apps/<slug>`;
+7. read app `AGENTS.md`, `SPEC.md`, `PERMISSIONS.md`, and `QA.md`;
+8. inspect the implementation/tests and working-tree state;
+9. claim the Issue using the standard `STATE: RUNNING / OWNER: CURSOR` comment;
+10. implement the smallest coherent change without touching unrelated apps;
+11. run repository verification and relevant QA;
+12. hand off in the Issue using the mandatory REVIEW evidence format.
+
+If the user starts a complete implementation-level task directly in Cursor, Cursor creates a task Issue before implementation and follows the same sequence. Product/UX/policy ambiguity must become a decision/handoff Issue rather than an implicit guess.
 
 ## Rule layout
 
@@ -38,6 +45,7 @@ For a new task, Cursor should:
 .cursor/
 └─ rules/
    ├─ 00-core.mdc
+   ├─ 05-github-collaboration.mdc
    ├─ 10-extension-architecture.mdc
    ├─ 20-design-system.mdc
    ├─ 30-third-party-integrations.mdc
@@ -46,35 +54,44 @@ For a new task, Cursor should:
 
 Keep rules focused. Do not copy the full contents of `AGENTS.md` into every rule.
 
+## GitHub access
+
+`gh` CLI is the required default bridge for Cursor terminal-based task state. Setup is documented in `docs/GITHUB_AGENT_SETUP.md`.
+
+The official GitHub MCP Server may also be configured globally in Cursor, but it is optional and must not put a PAT or other secret into this repository.
+
+A GitHub access failure is a workflow blocker for claiming, completing, or handing off tasks. Do not replace GitHub state with local scratch notes.
+
 ## Ignore files
 
 `.cursorignore` blocks Cursor code-context access to secrets, credentials, private/session data, generated output, and packaged artifacts.
 
 `.cursorindexingignore` removes noisy generated material from semantic indexing while leaving it accessible when explicitly needed.
 
-Important: terminal commands and external MCP tools may operate outside `.cursorignore` protections. The policy remains: never intentionally read or expose secrets just because a tool technically can.
+Terminal commands and external MCP tools may operate outside `.cursorignore` protections. Never intentionally read or expose secrets just because a tool technically can.
 
 ## Prompting Cursor for implementation
 
-Good task prompt:
+Minimal prompt:
 
 ```text
-Read root AGENTS.md, the app AGENTS.md, and matching .cursor/rules first.
-Work only in apps/<slug> unless a shared change is required.
-Read the app SPEC/PERMISSIONS/QA before implementation.
-Implement <scope>.
-Do not broaden permissions.
-Use the shared design system.
-Run pnpm qa and report any failing gate.
+Open this repo and continue from CURRENT.md and the active GitHub Issue.
+Follow AGENTS.md, docs/COLLABORATION.md, and matching Cursor/app rules.
+Do not broaden scope or permissions.
+Run the required QA and hand the result back in the Issue using the repository handoff format.
 ```
 
-For third-party-site automation, also tell Cursor to verify the adapter compatibility contract and destructive-action failure behavior.
+The prompt should not need to repeat product policy that is already in GitHub.
+
+For third-party-site automation, also verify adapter compatibility and destructive-action failure behavior.
 
 ## Completion contract
 
-Cursor must not claim a code task is complete without either:
+Cursor must not claim a code task is complete without:
 
-- successful relevant QA; or
-- an explicit statement of which check could not be executed and why.
+- an Issue in `STATE: REVIEW` with `OWNER: CHATGPT` (unless explicit delegated review authority exists);
+- commit/PR evidence;
+- successful relevant QA or an explicit failing/not-run result;
+- residual risk and intentionally unfinished work stated explicitly.
 
 A visual change also requires light/dark/system review, keyboard focus review, and host-page style-isolation review when injected into another website.
