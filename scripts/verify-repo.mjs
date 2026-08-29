@@ -20,7 +20,9 @@ const requiredRootFiles = [
   "docs/DEVELOPMENT.md",
   "docs/DESIGN_SYSTEM.md",
   "docs/CURSOR.md",
+  "templates/APP_AGENTS.md",
   "packages/design-system/package.json",
+  "packages/design-system/tsconfig.json",
   "packages/design-system/src/tokens.css",
   "packages/design-system/src/base.css",
   "packages/design-system/src/theme.ts",
@@ -48,6 +50,22 @@ if (existsSync(cursorRulesDir)) {
     if (!content.startsWith("---\n") || !content.includes("\ndescription:")) {
       errors.push(`Cursor rule is missing valid frontmatter/description: .cursor/rules/${name}`);
     }
+    if (!content.includes("\nalwaysApply:")) {
+      errors.push(`Cursor rule is missing alwaysApply frontmatter: .cursor/rules/${name}`);
+    }
+  }
+}
+
+const designPackagePath = join(root, "packages", "design-system", "package.json");
+if (existsSync(designPackagePath)) {
+  const designPackage = JSON.parse(readFileSync(designPackagePath, "utf8"));
+  if (designPackage.dependencies?.pretendard !== "1.3.9") {
+    errors.push("Design-system must pin Pretendard to 1.3.9 for reproducible local bundling.");
+  }
+  for (const requiredExport of ["./tokens.css", "./base.css", "./theme"]) {
+    if (!designPackage.exports?.[requiredExport]) {
+      errors.push(`Design-system package is missing export: ${requiredExport}`);
+    }
   }
 }
 
@@ -59,8 +77,13 @@ if (existsSync(tokensPath)) {
     "--ce-sys-color-bg-canvas",
     "--ce-sys-color-bg-surface",
     "--ce-sys-color-text-primary",
+    "--ce-sys-color-text-secondary",
+    "--ce-sys-color-text-disabled",
     "--ce-sys-color-border-default",
     "--ce-sys-color-action-primary",
+    "--ce-sys-color-status-info-solid",
+    "--ce-sys-color-status-success-solid",
+    "--ce-sys-color-status-warning-solid",
     "--ce-sys-color-status-danger-solid",
     "--ce-sys-color-focus-ring",
     "--ce-sys-type-body-md-size",
@@ -69,6 +92,8 @@ if (existsSync(tokensPath)) {
     "--ce-sys-motion-normal",
     "--ce-comp-button-height-md",
     "--ce-comp-input-height-md",
+    "--ce-comp-checkbox-size",
+    "--ce-comp-popup-width-md",
     "[data-ce-theme=\"dark\"]",
     "prefers-color-scheme: dark",
     "prefers-reduced-motion: reduce",
@@ -99,6 +124,7 @@ if (existsSync(appRoot)) {
     if (!statSync(appDir).isDirectory()) continue;
 
     const requiredAppFiles = [
+      "AGENTS.md",
       "package.json",
       "wxt.config.ts",
       "docs/SPEC.md",
