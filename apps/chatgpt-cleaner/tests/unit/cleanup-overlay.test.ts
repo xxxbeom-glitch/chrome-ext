@@ -29,4 +29,19 @@ describe("cleanup overlay shell", () => {
     expect(mutator.deleteCalls).toEqual([]);
     expect(shadow.textContent).toContain("Delete cancelled");
   });
+
+  it("traps Escape to close without mutating", () => {
+    document.body.replaceChildren();
+    const mutator = createRecordingMutationAdapter({});
+    const overlay = createCleanupOverlay(document, {
+      mutator,
+      capabilities: mutator.capabilities,
+    });
+    overlay.open();
+    expect(overlay.isOpen()).toBe(true);
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    expect(overlay.isOpen()).toBe(false);
+    expect(mutator.archiveCalls).toEqual([]);
+    expect(mutator.deleteCalls).toEqual([]);
+  });
 });

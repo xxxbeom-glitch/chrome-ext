@@ -18,20 +18,21 @@ Last updated: 2026-08-29
 | #6 | `apps/chatgpt-cleaner` / MVP implementation epic | READY | CURSOR | SELF | parent epic |
 | #15 | `apps/chatgpt-cleaner` / live Archive-Delete binding | BLOCKED | USER | USER | n/a |
 | #20 | `apps/chatgpt-cleaner` / Google Auth provider setup | BLOCKED | USER | USER | n/a |
-| #23 | `apps/chatgpt-cleaner` / Phase 6 cloud bookmark wiring | RUNNING | CURSOR | SELF | `feat/chatgpt-cleaner-p6-cloud-bookmark` |
 
 Concurrent active tasks are allowed only when their declared write scopes are disjoint. See `docs/COLLABORATION.md`.
 
 ## Current repository baseline
 
-- Phases 0–5 engineering on `main`.
-- Remediation #21/#22 merged: CI Playwright Chromium install, PKCE auth contract, `WXT_PUBLIC_*` env naming. Main Actions GREEN (`33237285058`).
+- Phases 0–7 engineering complete on `main` (Phase 7 via #25/#26).
+- Auth: Supabase OAuth PKCE only. Env: `WXT_PUBLIC_SUPABASE_*`.
+- Residual / USER blockers: `apps/chatgpt-cleaner/docs/RESIDUAL.md`.
+- Epic #6 stays open until #15/#20 clear or user accepts residual.
 
 ## Next planned product work
 
-1. Finish #23 Phase 6 (cloud when signed in, local fallback; no interactive Google smoke required).
-2. Continue Phase 7 hardening that does not need live ChatGPT or Google.
-3. Keep #15/#20 BLOCKED for real USER actions only.
+1. USER: complete #20 Google Web OAuth + Supabase redirect allowlist, then Cursor verifies sign-in + cross-profile restore.
+2. USER: complete #15 disposable ChatGPT Archive/Delete notes, then Cursor binds live mutators fail-open only when proven.
+3. After both, close epic #6.
 
 ## Blockers / decisions needed
 
