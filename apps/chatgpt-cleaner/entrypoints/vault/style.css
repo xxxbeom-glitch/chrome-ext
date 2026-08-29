@@ -100,15 +100,16 @@ body {
   gap: var(--ce-sys-space-sm);
 }
 
-.ce-button {
-  min-height: var(--ce-comp-button-height-md);
-  padding-inline: var(--ce-comp-button-padding-inline-sm);
-  border-radius: var(--ce-comp-button-radius);
-  border: var(--ce-sys-border-width-default) solid var(--ce-sys-color-border-default);
-  background: var(--ce-sys-color-bg-canvas);
-  color: inherit;
-  cursor: pointer;
-  font: inherit;
+.ce-button--danger {
+  background: var(--ce-sys-color-status-danger-solid);
+  color: #fff;
+  border-color: transparent;
+  margin-top: var(--ce-sys-space-md);
+}
+
+.ce-empty {
+  padding: var(--ce-sys-space-md);
+  color: var(--ce-sys-color-text-secondary);
 }
 
 .ce-button:focus-visible,
