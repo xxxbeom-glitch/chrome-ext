@@ -155,12 +155,18 @@ Then stop only the real-cloud E2E gate with an explicit blocker requiring the us
 
 ## 8. Environment values
 
-Expected client configuration (names may be refined but must remain documented):
+Canonical client configuration names (WXT public env only):
 
 ```text
 WXT_PUBLIC_SUPABASE_URL=
 WXT_PUBLIC_SUPABASE_ANON_KEY=
+WXT_PUBLIC_SUPABASE_AUTH_REDIRECT_URL=   # optional; prefer chrome.identity.getRedirectURL()
 ```
+
+Do not use `VITE_SUPABASE_*` names in this app.
+
+Auth contract: Supabase OAuth PKCE + `chrome.identity.launchWebAuthFlow` + `exchangeCodeForSession`.
+Do not mix with `signInWithIdToken`.
 
 These are client-publishable values, not service-role secrets.
 

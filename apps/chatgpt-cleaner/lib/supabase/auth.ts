@@ -19,9 +19,17 @@ export async function getAuthSessionState(): Promise<AuthSessionState> {
   };
 }
 
+function extensionRedirectUrl(): string | undefined {
+  if (typeof browser === "undefined" || !browser.identity?.getRedirectURL) {
+    return undefined;
+  }
+  // Trailing slash form is what chrome.identity returns by default.
+  return browser.identity.getRedirectURL();
+}
+
 /**
- * Starts Google OAuth through Supabase. Uses chrome.identity launchWebAuthFlow when available.
- * Returns false when config/provider/callback is not ready instead of inventing credentials.
+ * Google sign-in via Supabase OAuth PKCE + chrome.identity.
+ * Returns fail-soft errors when config/provider/redirect is not ready.
  */
 export async function startGoogleSignIn(): Promise<{ ok: true } | { ok: false; error: string }> {
   const config = readSupabasePublicConfig();
@@ -30,14 +38,9 @@ export async function startGoogleSignIn(): Promise<{ ok: true } | { ok: false; e
     return { ok: false, error: "Supabase public config is missing" };
   }
 
-  const redirectTo =
-    config.authRedirectUrl ??
-    (typeof browser !== "undefined" && browser.identity?.getRedirectURL
-      ? browser.identity.getRedirectURL()
-      : undefined);
-
+  const redirectTo = config.authRedirectUrl ?? extensionRedirectUrl();
   if (!redirectTo) {
-    return { ok: false, error: "Auth redirect URL is unavailable" };
+    return { ok: false, error: "chrome.identity redirect URL is unavailable" };
   }
 
   const { data, error } = await client.auth.signInWithOAuth({
@@ -45,6 +48,10 @@ export async function startGoogleSignIn(): Promise<{ ok: true } | { ok: false; e
     options: {
       redirectTo,
       skipBrowserRedirect: true,
+      queryParams: {
+        access_type: "offline",
+        prompt: "consent",
+      },
     },
   });
 
@@ -53,7 +60,7 @@ export async function startGoogleSignIn(): Promise<{ ok: true } | { ok: false; e
   }
 
   if (typeof browser === "undefined" || !browser.identity?.launchWebAuthFlow) {
-    return { ok: false, error: "chrome.identity is unavailable in this context" };
+    return { ok: false, error: "chrome.identity.launchWebAuthFlow is unavailable" };
   }
 
   try {
@@ -64,11 +71,17 @@ export async function startGoogleSignIn(): Promise<{ ok: true } | { ok: false; e
     if (!responseUrl) {
       return { ok: false, error: "OAuth flow returned no redirect URL" };
     }
-    const url = new URL(responseUrl);
-    const code = url.searchParams.get("code");
+
+    const redirected = new URL(responseUrl);
+    const code = redirected.searchParams.get("code");
     if (!code) {
-      return { ok: false, error: "OAuth redirect missing authorization code" };
+      return {
+        ok: false,
+        error:
+          "OAuth redirect missing authorization code. Ensure Supabase client uses PKCE (flowType=pkce) and the chromiumapp.org redirect is allowlisted.",
+      };
     }
+
     const exchanged = await client.auth.exchangeCodeForSession(code);
     if (exchanged.error) {
       return { ok: false, error: exchanged.error.message };
