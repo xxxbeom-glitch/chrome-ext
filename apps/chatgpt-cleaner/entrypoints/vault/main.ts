@@ -1,50 +1,51 @@
 import { applyTheme } from "@chrome-ext/design-system/theme";
-import { renderVaultDetail } from "../../lib/ui/vault-renderer";
+import { renderVaultItemDetail } from "../../lib/ui/vault-renderer";
 import { loadThemeMode } from "../../lib/storage/theme";
 import { vaultService } from "../../lib/domain/vault/service";
 import type { VaultRecord } from "../../lib/domain/vault/local-repository";
-import type { VaultConversationDetail } from "../../lib/domain/types";
+import type { VaultItemDetail, VaultMessageBlock } from "../../lib/domain/types";
 
-function completenessLabel(value: VaultRecord["completeness"]): string {
-  return value === "complete" ? "완료" : "부분";
+function roleLabel(role: VaultRecord["role"]): string {
+  return role === "user" ? "질문" : role === "assistant" ? "답변" : "메시지";
 }
 
-function toDetail(record: VaultRecord): VaultConversationDetail {
+function blockPreview(block: VaultRecord["blocks"][number]): string {
+  if (block.type === "list") return block.items.join(" · ");
+  if (block.type === "link") return block.label || block.href;
+  return "text" in block ? block.text : block.label;
+}
+
+function preview(record: VaultRecord): string {
+  return record.blocks.map(blockPreview).join(" ").replace(/\s+/g, " ").trim().slice(0, 120) || "내용 없음";
+}
+
+function toDetail(record: VaultRecord): VaultItemDetail {
+  const blocks: VaultMessageBlock[] = record.blocks.map((block) => {
+    if (block.type === "list") return { type: "list", items: block.items };
+    if (block.type === "code") {
+      return {
+        type: "code",
+        text: block.text,
+        ...(block.language ? { language: block.language } : {}),
+      };
+    }
+    if (block.type === "link") return { type: "link", href: block.href, label: block.label };
+    if (block.type === "unsupported-media") return { type: "unsupported-media", label: block.label };
+    if (block.type === "table") return { type: "table", text: block.text };
+    if (block.type === "heading") return { type: "heading", text: block.text };
+    if (block.type === "quote") return { type: "quote", text: block.text };
+    return { type: "paragraph", text: block.text };
+  });
   return {
     id: record.id,
-    title: record.title,
     sourceConversationId: record.sourceConversationId,
+    sourceConversationTitle: record.sourceConversationTitle,
     sourceUrl: record.sourceUrl,
+    sourceMessageId: record.sourceMessageId,
+    role: record.role,
+    messageOrdinal: record.messageOrdinal,
     updatedAt: record.updatedAt,
-    bookmarkCount: record.bookmarks.length,
-    completeness: record.completeness,
-    messages: record.snapshot.messages.map((message) => ({
-      ordinal: message.ordinal,
-      role: message.role,
-      blocks: message.blocks.map((block) => {
-        if (block.type === "list") return { type: "list", items: block.items };
-        if (block.type === "code") {
-          return {
-            type: "code",
-            text: block.text,
-            ...(block.language ? { language: block.language } : {}),
-          };
-        }
-        if (block.type === "link") return { type: "link", href: block.href, label: block.label };
-        if (block.type === "unsupported-media") {
-          return { type: "unsupported-media", label: block.label };
-        }
-        if (block.type === "table") return { type: "table", text: block.text };
-        if (block.type === "heading") return { type: "heading", text: block.text };
-        if (block.type === "quote") return { type: "quote", text: block.text };
-        return { type: "paragraph", text: block.text };
-      }),
-    })),
-    anchors: record.bookmarks.map((bookmark) => ({
-      id: bookmark.id,
-      messageOrdinal: bookmark.messageOrdinal,
-      excerpt: bookmark.excerpt,
-    })),
+    blocks,
   };
 }
 
@@ -59,7 +60,7 @@ async function init(): Promise<void> {
   app.className = "ce-vault";
 
   const title = document.createElement("h1");
-  title.textContent = "대화 보관함";
+  title.textContent = "북마크 보관함";
 
   const subtitle = document.createElement("p");
   subtitle.className = "ce-vault__subtitle";
@@ -69,7 +70,7 @@ async function init(): Promise<void> {
 
   const list = document.createElement("ul");
   list.className = "ce-vault__list";
-  list.setAttribute("aria-label", "저장된 대화");
+  list.setAttribute("aria-label", "저장한 질문과 답변");
 
   const reader = document.createElement("section");
   reader.className = "ce-vault__reader";
@@ -82,20 +83,20 @@ async function init(): Promise<void> {
     reader.replaceChildren();
     if (!record) {
       const empty = document.createElement("p");
-      empty.textContent = "스냅샷을 찾을 수 없습니다.";
+      empty.textContent = "저장한 메시지를 찾을 수 없습니다.";
       reader.append(empty);
       return;
     }
 
-    renderVaultDetail(reader, toDetail(record));
+    renderVaultItemDetail(reader, toDetail(record));
 
     const deleteBtn = document.createElement("button");
     deleteBtn.type = "button";
     deleteBtn.className = "ce-button ce-button--danger";
-    deleteBtn.textContent = "보관함 사본 삭제";
+    deleteBtn.textContent = "이 북마크 삭제";
     deleteBtn.addEventListener("click", () => {
       const confirmed = window.confirm(
-        `보관함 사본 "${record.title}"을(를) 삭제할까요? ChatGPT 원본 대화는 삭제되지 않습니다.`,
+        `저장한 ${roleLabel(record.role)}을(를) 보관함에서 삭제할까요? ChatGPT 원본 대화에는 영향을 주지 않습니다.`,
       );
       if (!confirmed) return;
       void vaultService.deleteVaultOnly(record.id).then((deleted) => {
@@ -109,8 +110,8 @@ async function init(): Promise<void> {
     const backend = await vaultService.backend();
     subtitle.textContent =
       backend === "cloud"
-        ? "클라우드 보관함(로그인됨). 여기서 삭제해도 ChatGPT 원본은 지우지 않습니다."
-        : "로컬 보관함. 팝업에서 로그인하면 클라우드와 동기화됩니다. 여기서 삭제해도 ChatGPT 원본은 지우지 않습니다.";
+        ? "클라우드에 저장한 질문과 답변입니다. 원본 대화를 아카이브하거나 삭제해도 이 항목은 남습니다."
+        : "로컬에 저장한 질문과 답변입니다. 팝업에서 로그인하면 이후 저장은 클라우드 보관함을 사용합니다.";
 
     list.replaceChildren();
     records = await vaultService.list();
@@ -119,12 +120,12 @@ async function init(): Promise<void> {
       empty.className = "ce-empty";
       empty.textContent =
         backend === "cloud"
-          ? "클라우드 보관함에 저장된 대화가 없습니다. ChatGPT에서 북마크 버튼으로 저장해 보세요."
-          : "로컬 보관함에 저장된 대화가 없습니다. ChatGPT에서 북마크 버튼으로 저장해 보세요.";
+          ? "클라우드에 저장한 질문이나 답변이 없습니다."
+          : "로컬에 저장한 질문이나 답변이 없습니다.";
       list.append(empty);
       reader.replaceChildren();
       const hint = document.createElement("p");
-      hint.textContent = "저장한 스냅샷이 여기에 나타납니다.";
+      hint.textContent = "ChatGPT 메시지의 북마크 버튼을 누르면 해당 메시지 하나만 여기에 저장됩니다.";
       reader.append(hint);
       return;
     }
@@ -134,10 +135,11 @@ async function init(): Promise<void> {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "ce-vault__list-item";
+
       const itemTitle = document.createElement("span");
-      itemTitle.textContent = record.title;
+      itemTitle.textContent = `${roleLabel(record.role)} · ${preview(record)}`;
       const meta = document.createElement("span");
-      meta.textContent = `${completenessLabel(record.completeness)} · 북마크 ${record.bookmarks.length}개`;
+      meta.textContent = `${record.sourceConversationTitle} · ${record.updatedAt}`;
       button.append(itemTitle, meta);
       button.addEventListener("click", () => void showDetail(record.id));
       item.append(button);
