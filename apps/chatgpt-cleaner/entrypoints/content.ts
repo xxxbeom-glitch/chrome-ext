@@ -1,10 +1,10 @@
 import {
-  captureCurrentConversation,
+  captureMessage,
   discoverAccountHistory,
   injectBookmarkControls,
   probeCompatibility,
 } from "../lib/adapters/chatgpt";
-import { createFailClosedMutationAdapter } from "../lib/adapters/chatgpt/mutations";
+import { createPrivateWebMutationAdapter } from "../lib/adapters/chatgpt/mutations";
 import { vaultService } from "../lib/domain/vault/service";
 import { isExtensionMessage, MESSAGE_VERSION } from "../lib/messaging/schema";
 import { markContentScriptLoaded } from "../lib/runtime/content-marker";
@@ -17,18 +17,18 @@ export default defineContentScript({
   cssInjectionMode: "manual",
   main(ctx) {
     markContentScriptLoaded(document);
-    const mutationAdapter = createFailClosedMutationAdapter();
+    const mutationAdapter = createPrivateWebMutationAdapter();
     const overlay = createCleanupOverlay(document, {
       mutator: mutationAdapter,
       capabilities: mutationAdapter.capabilities,
     });
 
     const applyProbe = (): void => {
-      const probe = probeCompatibility(document);
-      overlay.setCapabilities({
-        canArchive: probe.capabilities.canArchive && mutationAdapter.capabilities.canArchive,
-        canDelete: probe.capabilities.canDelete && mutationAdapter.capabilities.canDelete,
-      });
+      // Read/list and mutation compatibility are independent. Live mutations stay
+      // behind their private-web adapter; DOM probe drift must not silently change
+      // the PATCH contract.
+      probeCompatibility(document);
+      overlay.setCapabilities(mutationAdapter.capabilities);
     };
 
     const loadDiscovery = async (): Promise<void> => {
@@ -47,51 +47,22 @@ export default defineContentScript({
     };
 
     const syncBookmarks = (): void => {
-      const probe = probeCompatibility(document);
-      if (!probe.capabilities.canLocateAssistantActions) return;
-
       injectBookmarkControls(document, {
         onBookmark: (target, control) => {
           void (async () => {
             control.setStatus("saving");
-            const captureProbe = probeCompatibility(document);
-            if (!captureProbe.capabilities.canCaptureConversation) {
-              control.setStatus("failed", "대화 캡처를 사용할 수 없습니다");
-              return;
-            }
-            const snapshot = captureCurrentConversation(document);
-            const ordinal =
-              snapshot.messages.find((message) =>
-                target.sourceMessageId
-                  ? message.sourceMessageId === target.sourceMessageId
-                  : false,
-              )?.ordinal ??
-              snapshot.messages.find((message) => message.role === "assistant")?.ordinal ??
-              0;
-            const excerpt =
-              snapshot.messages
-                .find((message) => message.ordinal === ordinal)
-                ?.blocks.map((block) => ("text" in block ? block.text : ""))
-                .join(" ")
-                .slice(0, 120) || target.key;
-
             try {
-              const result = await vaultService.saveSnapshot({
-                snapshot,
-                anchor: {
-                  ...(target.sourceMessageId ? { sourceMessageId: target.sourceMessageId } : {}),
-                  messageOrdinal: ordinal,
-                  excerpt,
-                  anchorKey: target.key,
-                },
-              });
+              const snapshot = captureMessage(document, target);
+              const result = await vaultService.saveItem(snapshot);
               if (!result.ok) {
                 control.setStatus("failed", result.error);
                 return;
               }
               control.setStatus(
                 "saved",
-                result.backend === "cloud" ? "클라우드 보관함에 저장됨" : "로컬 보관함에 저장됨",
+                result.backend === "cloud"
+                  ? "이 메시지를 클라우드 보관함에 저장했습니다"
+                  : "이 메시지를 로컬 보관함에 저장했습니다",
               );
             } catch (error) {
               control.setStatus(
@@ -107,9 +78,7 @@ export default defineContentScript({
     applyProbe();
     syncBookmarks();
 
-    const observer = new MutationObserver(() => {
-      syncBookmarks();
-    });
+    const observer = new MutationObserver(() => syncBookmarks());
     observer.observe(document.documentElement, {
       childList: true,
       subtree: true,
