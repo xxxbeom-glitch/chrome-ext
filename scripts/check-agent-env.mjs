@@ -42,6 +42,23 @@ if (!status.ok) {
   failures.push("git status could not be read.");
 }
 
+const currentBranch = run("git", ["branch", "--show-current"]);
+if (!currentBranch.ok || !currentBranch.stdout) {
+  failures.push("Current Git branch could not be determined.");
+}
+
+if (remote.ok) {
+  const fetchMain = run("git", ["fetch", "--quiet", "origin", "main"]);
+  if (!fetchMain.ok) {
+    failures.push("Could not fetch origin/main. Task work must not start from an unverified stale base.");
+  } else {
+    const containsMain = run("git", ["merge-base", "--is-ancestor", "origin/main", "HEAD"]);
+    if (!containsMain.ok) {
+      failures.push("Current HEAD does not contain the latest origin/main. Rebase/update before claiming a task.");
+    }
+  }
+}
+
 const ghVersion = run("gh", ["--version"]);
 if (!ghVersion.ok) {
   failures.push("GitHub CLI (gh) is unavailable. Install it before agent handoff work.");
@@ -66,6 +83,7 @@ if (failures.length > 0) {
 }
 
 console.log("Agent environment check passed.");
+console.log(`Branch: ${currentBranch.stdout}`);
 if (status.stdout) {
   console.log("Working tree has local changes; inspect before editing:");
   console.log(status.stdout);
