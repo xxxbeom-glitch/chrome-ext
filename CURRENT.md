@@ -18,7 +18,6 @@ Last updated: 2026-08-29
 | #6 | `apps/chatgpt-cleaner` / MVP implementation epic | READY | CURSOR | SELF | parent epic |
 | #15 | `apps/chatgpt-cleaner` / live Archive-Delete binding | BLOCKED | USER | USER | n/a |
 | #20 | `apps/chatgpt-cleaner` / Google Auth provider setup | BLOCKED | USER | USER | n/a |
-| #31 | `apps/chatgpt-cleaner` / reliable conversation history discovery | RUNNING | CURSOR | SELF | `fix/chatgpt-history-discovery` |
 
 Concurrent active tasks are allowed only when their declared write scopes are disjoint. See `docs/COLLABORATION.md`.
 
@@ -26,14 +25,14 @@ Concurrent active tasks are allowed only when their declared write scopes are di
 
 - Phases 0–7 engineering complete on `main`.
 - User-facing UI copy: Korean (no i18n framework).
-- Cleanup open recovers missing content scripts via tab reload + readiness poll (#29/#30).
+- Cleanup overlay discovers account history via same-origin ChatGPT list API (#31/#33); sidebar scrape is fallback only.
 - Auth: Supabase OAuth PKCE only. Env: `WXT_PUBLIC_SUPABASE_*`.
 - Residual / USER blockers: `apps/chatgpt-cleaner/docs/RESIDUAL.md`.
 
 ## Next planned product work
 
-1. Land #31 history discovery (private-web list + DOM fallback).
-2. USER: #20 Google OAuth setup; #15 live Archive/Delete; signed-in discovery smoke.
+1. USER: signed-in discovery smoke (sidebar collapsed + home).
+2. USER: #20 Google OAuth setup; #15 live Archive/Delete.
 
 ## Blockers / decisions needed
 
