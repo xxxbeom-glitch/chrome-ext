@@ -1,0 +1,25 @@
+node_modules/
+.pnpm-store/
+.DS_Store
+Thumbs.db
+.env
+.env.*
+!.env.example
+
+# WXT / extension builds
+.output/
+dist/
+build/
+*.crx
+*.zip
+
+# Tests
+coverage/
+playwright-report/
+test-results/
+blob-report/
+
+# Tooling
+.vscode/
+.idea/
+*.log
