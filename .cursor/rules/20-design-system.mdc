@@ -1,0 +1,17 @@
+---
+description: Shared design-token, theme, typography, accessibility, and UI consistency rules.
+globs: ["apps/**/*.{css,scss,html,ts,tsx}", "packages/design-system/**/*"]
+alwaysApply: false
+---
+
+Read @docs/DESIGN_SYSTEM.md before changing extension-owned UI.
+
+- Use `packages/design-system` as the default visual foundation.
+- Pretendard Variable is the default typeface and must be bundled locally through the approved npm dependency; do not load fonts from a CDN at runtime.
+- Every UI must work in light, dark, and system theme modes.
+- Product code consumes semantic (`--ce-sys-*`) or component (`--ce-comp-*`) tokens. Primitive (`--ce-ref-*`) tokens are for design-system definitions only.
+- Do not hard-code colors, shadows, radii, spacing, typography, focus styles, or motion when a suitable token exists.
+- If a needed reusable value is missing, add a role-based token to the design system before using it in an app.
+- Preserve keyboard focus visibility and accessible contrast.
+- Respect `prefers-reduced-motion`.
+- Injected third-party-page UI must be style-isolated, preferably with Shadow DOM. Do not apply shared global reset/base styles to the host page.
