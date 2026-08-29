@@ -1,0 +1,104 @@
+name: Task
+about: Implementation-ready unit of work for ChatGPT ↔ Cursor execution.
+title: "[TASK] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for implementation work. A task is not READY until its scope and acceptance criteria are objective.
+
+  - type: input
+    id: app
+    attributes:
+      label: App / Scope
+      description: Extension slug or repository-level scope.
+      placeholder: chatgpt-cleaner or repo
+    validations:
+      required: true
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: One clear user-visible or engineering outcome.
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Only the context needed to execute this task safely.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: Objective pass/fail conditions, preferably as a checklist.
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: dont_change
+    attributes:
+      label: Do Not Change
+      description: Explicit boundaries and protected behavior.
+      placeholder: No permission expansion; do not modify unrelated apps.
+    validations:
+      required: true
+
+  - type: textarea
+    id: references
+    attributes:
+      label: Relevant Files / Decisions
+      description: SPEC, permission docs, decision records, prior issues, or PRs.
+      placeholder: apps/<slug>/docs/SPEC.md
+    validations:
+      required: false
+
+  - type: textarea
+    id: qa
+    attributes:
+      label: Required QA
+      description: Checks required for completion.
+      placeholder: pnpm verify:repo; pnpm typecheck; relevant tests/build/E2E/manual smoke
+    validations:
+      required: true
+
+  - type: dropdown
+    id: owner
+    attributes:
+      label: Initial Owner
+      options:
+        - CURSOR
+        - CHATGPT
+        - USER
+    validations:
+      required: true
+
+  - type: dropdown
+    id: state
+    attributes:
+      label: Initial State
+      options:
+        - READY
+        - DRAFT
+        - DECISION_NEEDED
+        - BLOCKED
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: readiness
+    attributes:
+      label: Readiness
+      options:
+        - label: I confirmed this task does not rely on unstated chat history.
+          required: true
+        - label: Permission/privacy/product-policy changes are either absent or explicitly documented.
+          required: true
