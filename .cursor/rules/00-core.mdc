@@ -1,0 +1,26 @@
+---
+description: Non-negotiable repository rules for all work in this Chrome extension monorepo.
+alwaysApply: true
+---
+
+Read and follow @AGENTS.md before making meaningful changes.
+
+Repository-wide references:
+- @docs/ARCHITECTURE.md
+- @docs/SECURITY.md
+- @docs/QA.md
+- @docs/STORE_POLICY.md
+- @docs/DEVELOPMENT.md
+- @docs/DESIGN_SYSTEM.md
+- @docs/CURSOR.md
+
+Mandatory behavior:
+- Preserve the multi-extension monorepo boundary: products live under `apps/<slug>`.
+- Chrome Manifest V3, TypeScript, WXT, pnpm, Vitest, and Playwright are the repository defaults.
+- Do not broaden permissions, data collection, external transmission, or product scope without documenting it first.
+- Never add remote executable code, `eval`, `new Function`, secrets, or session material.
+- Treat background service workers as ephemeral and third-party page content as untrusted.
+- Keep unrelated extensions unchanged.
+- Use the shared design system for extension-owned UI.
+- Run `pnpm verify:repo` and all relevant QA gates before declaring implementation complete.
+- If repository rules conflict with an app-local convenience, repository rules win unless the app SPEC explicitly records an approved exception.
