@@ -6,18 +6,22 @@ alwaysApply: true
 GitHub is the operational hub for ChatGPT ↔ Cursor collaboration in this repository.
 
 Before meaningful work:
-1. read @CURRENT.md;
+1. read @CURRENT.md and inspect every row in the active-work table;
 2. read @docs/COLLABORATION.md;
-3. identify and read the active GitHub Issue;
-4. read @AGENTS.md and relevant app-local `AGENTS.md` / SPEC / PERMISSIONS / QA;
-5. run `pnpm agent:check` when the task requires GitHub state changes;
-6. inspect `git status` and current branch.
+3. identify the target GitHub Issue and read its body plus latest comments;
+4. determine the latest exact valid `STATE:` + `OWNER:` pair; if none exists, treat the Issue as DRAFT and do not implement;
+5. read @AGENTS.md and relevant app-local `AGENTS.md` / SPEC / PERMISSIONS / QA;
+6. run `pnpm agent:check` when the task requires GitHub state changes;
+7. inspect `git status`, current branch, and declared write scopes of other RUNNING tasks.
 
-Ownership:
+Ownership and collision safety:
 - Never implement a `DRAFT` task.
 - Normally implement only when the Issue is `STATE: READY` and `OWNER: CURSOR`.
-- If the user directly gives a complete implementation-level task, create a task Issue first and then claim it.
+- If the user directly gives a complete implementation-level task, create a task Issue with an exact state header first and then claim it.
 - Do not work concurrently on a scope currently owned by CHATGPT or USER.
+- Multiple RUNNING tasks are allowed only when their write scopes are disjoint.
+- If the target scope overlaps another RUNNING task, stop the overlapping work and record BLOCKED instead of guessing or merging scopes silently.
+- `pnpm agent:check` must verify that current HEAD contains latest `origin/main` before a task is claimed.
 
 Claim comment format:
 ```text
@@ -25,7 +29,7 @@ STATE: RUNNING
 OWNER: CURSOR
 BRANCH: <branch>
 BASE: main
-SCOPE: <one-line scope>
+SCOPE: <explicit write scope>
 ```
 
 Completion comment format is defined in @docs/COLLABORATION.md and is mandatory. Include commit/PR, changed behavior, QA results, result, risk, and intentionally unfinished work.
