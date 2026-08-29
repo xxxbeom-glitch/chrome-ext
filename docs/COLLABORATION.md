@@ -20,7 +20,7 @@ Each artifact has one job. Do not duplicate the same state across several system
 
 Chat history, terminal scrollback, and local editor state are never sources of truth.
 
-## 2. Ownership rule
+## 2. Ownership and concurrency rule
 
 A task has exactly one current owner.
 
@@ -30,6 +30,16 @@ Allowed owners:
 - `USER`
 
 Do not have ChatGPT and Cursor simultaneously modify the same task scope.
+
+Multiple active tasks are allowed only when their write scopes are disjoint.
+
+Examples:
+- `apps/chatgpt-cleaner/**` and `apps/another-extension/**` may run concurrently.
+- Two tasks modifying the same app must not run concurrently unless their paths and behavioral contracts are explicitly proven independent.
+- A task modifying `packages/**`, root configuration, repository policies, shared CI, or shared design-system behavior must declare that shared scope. Another task must not concurrently modify the same shared paths.
+- If scope overlap is discovered after work starts, the later task moves to `BLOCKED` until ownership is resolved.
+
+`CURRENT.md` lists every active task so both agents can detect collisions before editing.
 
 ### Default responsibilities
 
@@ -54,12 +64,16 @@ Do not have ChatGPT and Cursor simultaneously modify the same task scope.
 
 ## 3. Task state machine
 
-State is communicated in Issue comments using an exact machine-readable header. No labels are required for correctness.
+State is communicated in an Issue body or Issue comments using an exact machine-readable header:
 
 ```text
 STATE: READY
 OWNER: CURSOR
 ```
+
+The canonical current state is the **latest valid `STATE:` + `OWNER:` pair in chronological order** across the Issue body and comments.
+
+If an Issue has no exact valid state header, treat it as `DRAFT` with no executable owner. GitHub Issue Form dropdown fields are descriptive metadata only; they do not replace the exact state header.
 
 Allowed states:
 
@@ -69,7 +83,7 @@ Allowed states:
 - `REVIEW` — implementation complete; waiting for review.
 - `FIX_REQUIRED` — same task returns to Cursor.
 - `DECISION_NEEDED` — meaningful decision required from User/ChatGPT.
-- `BLOCKED` — external dependency prevents progress.
+- `BLOCKED` — external dependency or scope collision prevents progress.
 - `DONE` — Acceptance Criteria satisfied; Issue may be closed.
 
 A state transition must always specify `OWNER:`.
@@ -85,30 +99,34 @@ A task Issue must contain:
 5. Do Not Change
 6. Relevant files / decisions
 7. Required QA
-8. Initial `STATE` + `OWNER`
+8. Initial exact `STATE` + `OWNER` header before execution
 
 If these are not sufficient to implement safely, the Issue is not READY.
+
+When using the browser Issue Form, ChatGPT or Cursor must add the first exact state comment before implementation begins.
 
 ## 5. Cursor claim protocol
 
 Before code changes, Cursor must:
 
-1. read `CURRENT.md`;
-2. read the active Issue;
+1. read `CURRENT.md` and all listed active work;
+2. read the target Issue and determine its latest valid state header;
 3. read repository and app-local rules;
 4. ensure the Issue is `READY` with `OWNER: CURSOR`, or create a self-contained task Issue when the user has directly supplied a complete task;
-5. ensure the working tree is clean and main is current;
-6. comment on the Issue:
+5. run `pnpm agent:check` and ensure the current HEAD contains latest `origin/main`;
+6. confirm its write scope does not overlap another RUNNING task;
+7. ensure the working-tree state is understood;
+8. comment on the Issue:
 
 ```text
 STATE: RUNNING
 OWNER: CURSOR
 BRANCH: <branch>
 BASE: main
-SCOPE: <one-line scope>
+SCOPE: <explicit write scope>
 ```
 
-Cursor must not silently expand the task.
+Cursor must not silently expand the task or its write scope.
 
 ## 6. Cursor completion / handoff protocol
 
@@ -151,11 +169,12 @@ ChatGPT reviews:
 
 1. Acceptance Criteria;
 2. SPEC / Decision consistency;
-3. diff scope;
+3. diff and declared write-scope consistency;
 4. tests and CI evidence;
 5. permission / privacy impact;
 6. destructive-action safety when applicable;
-7. missing or concealed unfinished scope.
+7. missing or concealed unfinished scope;
+8. whether concurrent work could have invalidated the implementation.
 
 Then ChatGPT posts exactly one of:
 
@@ -190,9 +209,7 @@ If the same task fails review a third time because of a deeper assumption or unc
 `CURRENT.md` is intentionally short.
 
 It contains only:
-- active Issue;
-- current state;
-- current owner / next owner;
+- active work table: Issue, app/scope, state, owner, branch;
 - current baseline;
 - immediate next work;
 - blockers / decisions needed.
@@ -200,6 +217,8 @@ It contains only:
 It must not become a changelog or implementation diary.
 
 ChatGPT normally maintains `CURRENT.md` on `main`. Cursor should not edit it in feature branches unless the task explicitly assigns that responsibility.
+
+An Issue in `DONE` or closed state must be removed from the active work table promptly.
 
 ## 10. Durable decisions
 
@@ -223,9 +242,10 @@ Cursor may proceed without waiting for ChatGPT when:
 - the task is explicit and implementation-level;
 - it does not change a durable product/architecture decision;
 - permissions and data access are unchanged;
-- Acceptance Criteria can be written objectively.
+- Acceptance Criteria can be written objectively;
+- its write scope does not overlap an active RUNNING task.
 
-Cursor must create a GitHub task Issue first, then claim it using the standard protocol.
+Cursor must create a GitHub task Issue first, add an exact `STATE: READY / OWNER: CURSOR` state header, then claim it using the standard protocol.
 
 If product meaning is ambiguous, Cursor creates a handoff/decision Issue and stops the ambiguous part rather than guessing.
 
