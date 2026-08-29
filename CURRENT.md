@@ -17,24 +17,27 @@ Last updated: 2026-08-29
 | --- | --- | --- | --- | --- | --- |
 | #6 | `apps/chatgpt-cleaner` / MVP implementation epic | READY | CURSOR | SELF | parent epic |
 | #15 | `apps/chatgpt-cleaner` / live Archive-Delete binding | BLOCKED | USER | USER | n/a |
-| #18 | `apps/chatgpt-cleaner` / Phase 5 cloud auth | RUNNING | CURSOR | SELF | `feat/chatgpt-cleaner-p5-cloud-auth` |
+| #20 | `apps/chatgpt-cleaner` / Google Auth provider setup | BLOCKED | USER | USER | n/a |
 
 Concurrent active tasks are allowed only when their declared write scopes are disjoint. See `docs/COLLABORATION.md`.
 
 ## Current repository baseline
 
-- Phases 0–4 on `main`: bootstrap, UI shell, read adapter, fail-closed cleanup engine, local Vault domain.
-- Live ChatGPT Archive/Delete host binding remains unbound (#15).
+- Phases 0–5 engineering on `main` (bootstrap → UI → read adapter → fail-closed cleanup engine → local Vault → Supabase schema/auth scaffolding).
+- Supabase project `chatgpt-cleaner` has Vault tables + RLS applied.
+- Live ChatGPT Archive/Delete host binding remains unbound.
+- Interactive Google sign-in awaits Auth provider/redirect setup.
 
 ## Next planned product work
 
-1. Phase 5 Supabase schema/auth integration (local-first; real project activation may BLOCK).
-2. Phases 6–7 afterward.
+1. Cursor can continue Phase 6 cloud bookmark code against typed boundaries + local fallback.
+2. User resolves #15 and/or #20 when ready for live mutation / sign-in smoke.
+3. Phase 7 hardening after cloud path is exercisable.
 
 ## Blockers / decisions needed
 
-- **#15 BLOCKED (USER):** live ChatGPT Archive/Delete binding. Recommendation on Issue: defer while Vault phases continue; choose A/B/C.
-- Phase 5 may later BLOCK on Supabase/Google project setup.
+- **#15 BLOCKED (USER):** live ChatGPT Archive/Delete binding (disposable conversations / UI notes / private-web approval). Recommendation: defer while Vault work continues.
+- **#20 BLOCKED (USER):** enable Google Auth on Supabase project + OAuth redirect for extension identity flow. Exact steps on the Issue.
 - Repository is public; keep Issues/PRs public-safe.
 
 ## Recovery rule
