@@ -1,0 +1,14 @@
+---
+description: Testing and completion rules for extension and shared-package changes.
+globs: ["apps/**/*", "packages/**/*", "scripts/**/*"]
+alwaysApply: false
+---
+
+A code change is not complete because it builds once.
+
+- Add or update tests in the same change when behavior changes.
+- Unit-test pure logic, parsing, state transitions, storage adapters, permission decisions, message validation, and theme utilities.
+- E2E-test extension runtime behavior: load/install, popup/options/sidepanel, content-script injection, background messaging, storage persistence, permissions, theme switching, and critical host integrations.
+- Include negative/failure cases for third-party DOM changes and destructive operations.
+- Run `pnpm verify:repo`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and relevant `pnpm test:e2e` checks before declaring completion.
+- Never suppress a failing check merely to make CI green. Fix the cause or document a deliberate exception in the app QA document.
