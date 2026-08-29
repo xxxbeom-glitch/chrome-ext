@@ -1,43 +1,57 @@
 ---
-description: GitHub task, ownership, handoff, and recovery rules for Cursor work in this repository.
+description: GitHub task, ownership, review-mode, handoff, and recovery rules for Cursor work in this repository.
 alwaysApply: true
 ---
 
-GitHub is the operational hub for ChatGPT ↔ Cursor collaboration in this repository.
+GitHub is the operational hub for Cursor, ChatGPT, and user collaboration. ChatGPT is optional, not mandatory.
 
 Before meaningful work:
 1. read @CURRENT.md and inspect every row in the active-work table;
 2. read @docs/COLLABORATION.md;
 3. identify the target GitHub Issue and read its body plus latest comments;
-4. determine the latest exact valid `STATE:` + `OWNER:` pair; if none exists, treat the Issue as DRAFT and do not implement;
+4. determine the latest exact valid `STATE:` + `OWNER:` pair and `REVIEW_MODE`; if state headers are missing, treat the Issue as DRAFT and do not implement;
 5. read @AGENTS.md and relevant app-local `AGENTS.md` / SPEC / PERMISSIONS / QA;
 6. run `pnpm agent:check` when the task requires GitHub state changes;
 7. inspect `git status`, current branch, and declared write scopes of other RUNNING tasks.
 
 Ownership and collision safety:
-- Never implement a `DRAFT` task.
+- Never implement a DRAFT task.
 - Normally implement only when the Issue is `STATE: READY` and `OWNER: CURSOR`.
-- If the user directly gives a complete implementation-level task, create a task Issue with an exact state header first and then claim it.
-- Do not work concurrently on a scope currently owned by CHATGPT or USER.
+- If the user directly gives a complete implementation-level task, create a task Issue with exact state/review headers first and then claim it.
 - Multiple RUNNING tasks are allowed only when their write scopes are disjoint.
-- If the target scope overlaps another RUNNING task, stop the overlapping work and record BLOCKED instead of guessing or merging scopes silently.
+- If the target scope overlaps another RUNNING task, stop the overlapping work and record BLOCKED.
 - `pnpm agent:check` must verify that current HEAD contains latest `origin/main` before a task is claimed.
+
+Review modes:
+- `SELF`: default for routine work within established scope/policy. Cursor implements, posts REVIEW evidence, performs a separate second-pass review, and may mark DONE itself.
+- `CHATGPT`: use when the user requests ChatGPT review or an independent product/UX/policy review is useful.
+- `USER`: use when subjective hands-on acceptance is the actual completion gate.
+
+Unresolved material decisions must move to `DECISION_NEEDED`; do not invent them merely to keep SELF mode moving.
 
 Claim comment format:
 ```text
 STATE: RUNNING
 OWNER: CURSOR
+REVIEW_MODE: SELF|CHATGPT|USER
 BRANCH: <branch>
 BASE: main
 SCOPE: <explicit write scope>
 ```
 
-Completion comment format is defined in @docs/COLLABORATION.md and is mandatory. Include commit/PR, changed behavior, QA results, result, risk, and intentionally unfinished work.
+Implementation evidence format is defined in @docs/COLLABORATION.md and is mandatory. Include commit/PR, changed behavior, QA results, result, risk, and intentionally unfinished work.
 
-Do not silently skip failing QA. Do not close the Issue yourself unless the task explicitly delegates review authority to Cursor. Default completion state is `REVIEW` with `OWNER: CHATGPT`.
+For `REVIEW_MODE: SELF`:
+- post implementation evidence as `STATE: REVIEW / OWNER: CURSOR`;
+- perform a distinct second review pass against Acceptance Criteria, diff/scope, SPEC/decisions, permissions/data, destructive-action safety, QA evidence, risk, NOT_DONE, and concurrent-work conflicts;
+- only then post `STATE: DONE / OWNER: CURSOR / REVIEW_MODE: SELF / REVIEW: PASS` and close the Issue;
+- if defects are found, use FIX_REQUIRED; if a material decision is unresolved, use DECISION_NEEDED.
 
-If implementation requires a product/UX/policy/permission/privacy decision that is not already settled, do not guess. Post or create a decision/handoff Issue with `STATE: DECISION_NEEDED` and `OWNER: USER` or `OWNER: CHATGPT` as appropriate.
+For `REVIEW_MODE: CHATGPT`, hand off with `STATE: REVIEW / OWNER: CHATGPT`.
+For `REVIEW_MODE: USER`, hand off with `STATE: REVIEW / OWNER: USER` plus concise verification instructions.
 
-`CURRENT.md` is normally maintained by ChatGPT on main. Do not edit it from feature branches unless the task explicitly requires it.
+Do not silently skip failing QA. Do not claim DONE while required evidence is missing.
 
-Do not use local notes, editor memory, chat history, or terminal scrollback as replacement task state. Durable handoff must be in GitHub.
+Cursor may update `CURRENT.md` when operating standalone, but keep bookkeeping separate from unrelated implementation changes and remove DONE/closed Issues promptly.
+
+Do not use local notes, editor memory, chat history, or terminal scrollback as replacement task state. Durable state must be in GitHub.
