@@ -1,40 +1,27 @@
-import type { ConversationSnapshot } from "../../adapters/chatgpt/types";
-
-export interface VaultBookmark {
-  id: string;
-  sourceMessageId?: string;
-  messageOrdinal: number;
-  excerpt: string;
-  anchorKey: string;
-  createdAt: string;
-}
+import type { MessageSnapshot, SnapshotBlock, SnapshotMessage } from "../../adapters/chatgpt/types";
 
 export interface VaultRecord {
   id: string;
   sourceConversationId: string;
   sourceUrl?: string;
-  title: string;
-  snapshot: ConversationSnapshot;
-  completeness: "complete" | "partial";
-  messageCount: number;
+  sourceConversationTitle: string;
+  sourceMessageId?: string;
+  sourceMessageKey: string;
+  role: SnapshotMessage["role"];
+  messageOrdinal: number;
+  blocks: SnapshotBlock[];
   capturedAt: string;
   createdAt: string;
   updatedAt: string;
-  bookmarks: VaultBookmark[];
 }
 
 export type VaultSaveResult =
-  | { ok: true; record: VaultRecord }
+  | { ok: true; record: VaultRecord; deduplicated: boolean }
   | { ok: false; error: string; preservedExisting: boolean };
 
-function bookmarkKey(input: {
-  sourceMessageId?: string;
-  messageOrdinal: number;
-  anchorKey?: string;
-}): string {
-  if (input.sourceMessageId) return `msg:${input.sourceMessageId}`;
-  if (input.anchorKey) return input.anchorKey;
-  return `ordinal:${input.messageOrdinal}`;
+function localRecordId(snapshot: MessageSnapshot): string {
+  const safeKey = snapshot.sourceMessageKey.replace(/[^a-zA-Z0-9:_-]/g, "-");
+  return `local-${snapshot.sourceConversationId}-${safeKey}`;
 }
 
 export class LocalVaultRepository {
@@ -48,9 +35,14 @@ export class LocalVaultRepository {
     return this.records.get(id);
   }
 
-  getBySource(sourceConversationId: string): VaultRecord | undefined {
+  getBySourceMessage(sourceConversationId: string, sourceMessageKey: string): VaultRecord | undefined {
     for (const record of this.records.values()) {
-      if (record.sourceConversationId === sourceConversationId) return record;
+      if (
+        record.sourceConversationId === sourceConversationId &&
+        record.sourceMessageKey === sourceMessageKey
+      ) {
+        return record;
+      }
     }
     return undefined;
   }
@@ -58,62 +50,36 @@ export class LocalVaultRepository {
   /** Test/load helper: replace repository contents wholesale. */
   replaceAll(records: VaultRecord[]): void {
     this.records.clear();
-    for (const record of records) {
-      this.records.set(record.id, structuredClone(record));
-    }
+    for (const record of records) this.records.set(record.id, structuredClone(record));
   }
 
-  saveSnapshot(input: {
-    snapshot: ConversationSnapshot;
-    anchor: {
-      sourceMessageId?: string;
-      messageOrdinal: number;
-      excerpt: string;
-      anchorKey?: string;
-    };
-  }): VaultSaveResult {
-    const { snapshot, anchor } = input;
-    const existing = this.getBySource(snapshot.sourceConversationId);
-
-    if (snapshot.completeness === "partial" && existing?.completeness === "complete") {
-      return {
-        ok: false,
-        error: "완료된 보관함 스냅샷을 부분 캡처로 덮어쓰지 않습니다",
-        preservedExisting: true,
-      };
+  saveItem(snapshot: MessageSnapshot): VaultSaveResult {
+    if (snapshot.blocks.length === 0) {
+      return { ok: false, error: "저장할 메시지 내용이 없습니다", preservedExisting: true };
     }
 
+    const existing = this.getBySourceMessage(
+      snapshot.sourceConversationId,
+      snapshot.sourceMessageKey,
+    );
     const now = new Date().toISOString();
-    const id = existing?.id ?? `local-${snapshot.sourceConversationId}`;
-    const bookmarks = existing?.bookmarks.map((item) => ({ ...item })) ?? [];
-    const key = bookmarkKey(anchor);
-    if (!bookmarks.some((item) => item.anchorKey === key)) {
-      bookmarks.push({
-        id: `bm-${bookmarks.length + 1}-${key}`,
-        ...(anchor.sourceMessageId ? { sourceMessageId: anchor.sourceMessageId } : {}),
-        messageOrdinal: anchor.messageOrdinal,
-        excerpt: anchor.excerpt,
-        anchorKey: key,
-        createdAt: now,
-      });
-    }
-
     const record: VaultRecord = {
-      id,
+      id: existing?.id ?? localRecordId(snapshot),
       sourceConversationId: snapshot.sourceConversationId,
       ...(snapshot.sourceUrl ? { sourceUrl: snapshot.sourceUrl } : {}),
-      title: snapshot.title,
-      snapshot,
-      completeness: snapshot.completeness,
-      messageCount: snapshot.messages.length,
+      sourceConversationTitle: snapshot.sourceConversationTitle,
+      ...(snapshot.sourceMessageId ? { sourceMessageId: snapshot.sourceMessageId } : {}),
+      sourceMessageKey: snapshot.sourceMessageKey,
+      role: snapshot.role,
+      messageOrdinal: snapshot.messageOrdinal,
+      blocks: structuredClone(snapshot.blocks),
       capturedAt: snapshot.capturedAt,
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,
-      bookmarks,
     };
 
-    this.records.set(id, record);
-    return { ok: true, record };
+    this.records.set(record.id, record);
+    return { ok: true, record, deduplicated: !!existing };
   }
 
   deleteVaultOnly(id: string): boolean {
@@ -121,12 +87,11 @@ export class LocalVaultRepository {
   }
 }
 
-const STORAGE_KEY = "ce.vault.localRecords";
+/** V2 key so legacy whole-conversation local records remain untouched for rollback. */
+const STORAGE_KEY = "ce.vault.savedMessageItems.v2";
 
 export async function persistLocalVault(repo: LocalVaultRepository): Promise<void> {
-  await browser.storage.local.set({
-    [STORAGE_KEY]: repo.list(),
-  });
+  await browser.storage.local.set({ [STORAGE_KEY]: repo.list() });
 }
 
 export async function loadLocalVault(): Promise<LocalVaultRepository> {
@@ -140,7 +105,8 @@ export async function loadLocalVault(): Promise<LocalVaultRepository> {
       typeof row === "object" &&
       typeof (row as VaultRecord).id === "string" &&
       typeof (row as VaultRecord).sourceConversationId === "string" &&
-      !!(row as VaultRecord).snapshot
+      typeof (row as VaultRecord).sourceMessageKey === "string" &&
+      Array.isArray((row as VaultRecord).blocks)
     );
   });
   repo.replaceAll(valid);
