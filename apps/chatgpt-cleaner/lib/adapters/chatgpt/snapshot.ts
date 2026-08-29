@@ -1,22 +1,28 @@
 import { CHATGPT_SELECTORS } from "./dom/selectors";
 import type {
+  BookmarkAnchorTarget,
   ConversationSnapshot,
+  MessageSnapshot,
   SnapshotBlock,
   SnapshotMessage,
 } from "./types";
 
 function roleFromElement(el: Element): SnapshotMessage["role"] {
-  const role = el.getAttribute(CHATGPT_SELECTORS.messageRole)?.toLowerCase();
+  const roleHost = el.matches("[data-message-author-role]")
+    ? el
+    : el.querySelector("[data-message-author-role]");
+  const role = roleHost?.getAttribute(CHATGPT_SELECTORS.messageRole)?.toLowerCase();
   if (role === "user" || role === "assistant" || role === "system" || role === "tool") {
     return role;
   }
+  const turnRole = el.getAttribute("data-turn")?.toLowerCase();
+  if (turnRole === "user" || turnRole === "assistant") return turnRole;
   return "unknown";
 }
 
-function extractBlocks(root: Element): SnapshotBlock[] {
+export function extractBlocks(root: Element): SnapshotBlock[] {
   const blocks: SnapshotBlock[] = [];
-  const markdown =
-    root.querySelector(CHATGPT_SELECTORS.markdownRoot) ?? root;
+  const markdown = root.querySelector(CHATGPT_SELECTORS.markdownRoot) ?? root;
 
   for (const pre of Array.from(markdown.querySelectorAll(CHATGPT_SELECTORS.codeBlock))) {
     const language = pre.getAttribute("class")?.match(/language-([\w-]+)/)?.[1];
@@ -92,12 +98,58 @@ function currentConversationId(doc: Document): string {
   const fromActive = href?.match(/^\/c\/([^/?#]+)/)?.[1];
   if (fromActive) return fromActive;
 
-  // Fallback for fixture environments where location.pathname cannot be set.
   const first = doc.querySelector<HTMLAnchorElement>(CHATGPT_SELECTORS.conversationLink);
   const fromFirst = first?.getAttribute("href")?.match(/^\/c\/([^/?#]+)/)?.[1];
   return fromFirst ?? "unknown";
 }
 
+function conversationTitle(doc: Document): string {
+  return (
+    (doc.querySelector("title")?.textContent ?? "").replace(/\s*[-|].*$/, "").trim() ||
+    "제목 없는 대화"
+  );
+}
+
+function messageOrdinal(doc: Document, message: Element): number {
+  const articles = Array.from(doc.querySelectorAll(CHATGPT_SELECTORS.messageArticle));
+  const exact = articles.indexOf(message);
+  if (exact >= 0) return exact;
+  const containing = articles.findIndex((article) => article === message || article.contains(message));
+  return containing >= 0 ? containing : 0;
+}
+
+/** Capture only the message whose bookmark control the user clicked. */
+export function captureMessage(doc: Document, target: BookmarkAnchorTarget): MessageSnapshot {
+  const message = target.messageElement;
+  const blocks = extractBlocks(message);
+  if (blocks.length === 0) throw new Error("저장할 메시지 내용을 찾지 못했습니다");
+
+  const sourceConversationId = currentConversationId(doc);
+  const ordinal = messageOrdinal(doc, message);
+  const sourceMessageId =
+    target.sourceMessageId ?? message.getAttribute(CHATGPT_SELECTORS.messageId) ?? undefined;
+  const role = target.role === "unknown" ? roleFromElement(message) : target.role;
+  const sourceMessageKey = sourceMessageId
+    ? `msg:${sourceMessageId}`
+    : `${role}:ordinal:${ordinal}`;
+
+  return {
+    sourceConversationId,
+    sourceUrl:
+      sourceConversationId === "unknown"
+        ? doc.location.href
+        : `https://chatgpt.com/c/${sourceConversationId}`,
+    sourceConversationTitle: conversationTitle(doc),
+    ...(sourceMessageId ? { sourceMessageId } : {}),
+    sourceMessageKey,
+    role,
+    messageOrdinal: ordinal,
+    capturedAt: new Date().toISOString(),
+    blocks,
+  };
+}
+
+/** Legacy helper retained for migration fixtures; runtime bookmark flow no longer uses it. */
 export function captureCurrentConversation(doc: Document): ConversationSnapshot {
   const articles = Array.from(doc.querySelectorAll(CHATGPT_SELECTORS.messageArticle));
   const messages: SnapshotMessage[] = [];
@@ -115,10 +167,6 @@ export function captureCurrentConversation(doc: Document): ConversationSnapshot 
   });
 
   const sourceConversationId = currentConversationId(doc);
-  const title =
-    (doc.querySelector("title")?.textContent ?? "").replace(/\s*[-|].*$/, "").trim() ||
-    "제목 없는 대화";
-
   const completeness =
     sourceConversationId !== "unknown" && messages.length > 0 ? "complete" : "partial";
 
@@ -128,7 +176,7 @@ export function captureCurrentConversation(doc: Document): ConversationSnapshot 
       sourceConversationId === "unknown"
         ? doc.location.href
         : `https://chatgpt.com/c/${sourceConversationId}`,
-    title,
+    title: conversationTitle(doc),
     capturedAt: new Date().toISOString(),
     completeness,
     messages,
