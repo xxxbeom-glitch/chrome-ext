@@ -17,6 +17,7 @@ Last updated: 2026-08-29
 | --- | --- | --- | --- | --- | --- |
 | #6 | `apps/chatgpt-cleaner` / MVP implementation epic | READY | CURSOR | SELF | parent epic |
 | #15 | `apps/chatgpt-cleaner` / live Archive-Delete binding | BLOCKED | USER | USER | n/a |
+| #18 | `apps/chatgpt-cleaner` / Phase 5 cloud auth | RUNNING | CURSOR | SELF | `feat/chatgpt-cleaner-p5-cloud-auth` |
 
 Concurrent active tasks are allowed only when their declared write scopes are disjoint. See `docs/COLLABORATION.md`.
 
