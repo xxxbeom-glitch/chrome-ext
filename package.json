@@ -4,11 +4,16 @@
   "version": "0.0.0",
   "packageManager": "pnpm@10.15.0",
   "scripts": {
+    "verify:repo": "node scripts/verify-repo.mjs",
     "lint": "pnpm -r --if-present lint",
-    "typecheck": "pnpm -r --if-present typecheck",
+    "typecheck:foundation": "tsc -p packages/design-system/tsconfig.json --noEmit",
+    "typecheck": "pnpm typecheck:foundation && pnpm -r --if-present typecheck",
     "test": "pnpm -r --if-present test",
     "build": "pnpm -r --if-present build",
     "test:e2e": "pnpm -r --if-present test:e2e",
-    "qa": "pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm test:e2e"
+    "qa": "pnpm verify:repo && pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm test:e2e"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2"
   }
 }
