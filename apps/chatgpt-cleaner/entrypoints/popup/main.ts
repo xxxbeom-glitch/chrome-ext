@@ -1,5 +1,5 @@
 import { applyTheme } from "@chrome-ext/design-system/theme";
-import { MESSAGE_VERSION } from "../../lib/messaging/schema";
+import { isExtensionMessage, MESSAGE_VERSION } from "../../lib/messaging/schema";
 import { loadThemeMode, saveThemeMode, type StoredThemeMode } from "../../lib/storage/theme";
 import {
   getAuthSessionState,
@@ -9,12 +9,33 @@ import {
 } from "../../lib/supabase/auth";
 import { isSupabaseConfigured } from "../../lib/supabase/config";
 
-async function send(type: "tabs.openChatgpt" | "tabs.openVault", openCleanup = false): Promise<void> {
+async function send(
+  type: "tabs.openChatgpt" | "tabs.openVault",
+  openCleanup = false,
+): Promise<{ ok: true } | { ok: false; error: string }> {
   const message =
     type === "tabs.openChatgpt"
       ? { version: MESSAGE_VERSION, type, openCleanup }
       : { version: MESSAGE_VERSION, type };
-  await browser.runtime.sendMessage(message);
+
+  try {
+    const raw = await browser.runtime.sendMessage(message);
+    if (!isExtensionMessage(raw) || raw.type !== "ack") {
+      return {
+        ok: false,
+        error: "확장프로그램 응답이 올바르지 않습니다. 다시 시도해 주세요.",
+      };
+    }
+    if (!raw.ok) {
+      return { ok: false, error: raw.error };
+    }
+    return { ok: true };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "요청에 실패했습니다.",
+    };
+  }
 }
 
 function sessionLabel(state: AuthSessionState): string {
@@ -56,6 +77,10 @@ async function init(): Promise<void> {
   subtitle.textContent =
     "정리는 ChatGPT 안에서, 북마크한 대화는 보관함 페이지에서 확인합니다.";
 
+  const actionStatus = document.createElement("p");
+  actionStatus.className = "ce-popup__note";
+  actionStatus.setAttribute("aria-live", "polite");
+
   const actions = document.createElement("div");
   actions.className = "ce-popup__actions";
 
@@ -63,19 +88,37 @@ async function init(): Promise<void> {
   openChatgpt.type = "button";
   openChatgpt.className = "ce-button ce-button--primary";
   openChatgpt.textContent = "ChatGPT 열기";
-  openChatgpt.addEventListener("click", () => void send("tabs.openChatgpt"));
+  openChatgpt.addEventListener("click", () => {
+    void (async () => {
+      actionStatus.textContent = "ChatGPT를 여는 중…";
+      const result = await send("tabs.openChatgpt");
+      actionStatus.textContent = result.ok ? "" : result.error;
+    })();
+  });
 
   const cleanUp = document.createElement("button");
   cleanUp.type = "button";
   cleanUp.className = "ce-button ce-button--primary";
   cleanUp.textContent = "대화방 정리하기";
-  cleanUp.addEventListener("click", () => void send("tabs.openChatgpt", true));
+  cleanUp.addEventListener("click", () => {
+    void (async () => {
+      actionStatus.textContent = "정리 화면을 여는 중…";
+      const result = await send("tabs.openChatgpt", true);
+      actionStatus.textContent = result.ok ? "" : result.error;
+    })();
+  });
 
   const vault = document.createElement("button");
   vault.type = "button";
   vault.className = "ce-button ce-button--secondary";
   vault.textContent = "북마크한 대화";
-  vault.addEventListener("click", () => void send("tabs.openVault"));
+  vault.addEventListener("click", () => {
+    void (async () => {
+      actionStatus.textContent = "보관함을 여는 중…";
+      const result = await send("tabs.openVault");
+      actionStatus.textContent = result.ok ? "" : result.error;
+    })();
+  });
 
   actions.append(openChatgpt, cleanUp, vault);
 
@@ -146,7 +189,7 @@ async function init(): Promise<void> {
   });
   themeRow.append(themeSelect);
 
-  app.append(title, subtitle, actions, authStatus, authRow, themeRow);
+  app.append(title, subtitle, actions, actionStatus, authStatus, authRow, themeRow);
 }
 
 void init();

@@ -18,6 +18,7 @@ Last updated: 2026-08-29
 | #6 | `apps/chatgpt-cleaner` / MVP implementation epic | READY | CURSOR | SELF | parent epic |
 | #15 | `apps/chatgpt-cleaner` / live Archive-Delete binding | BLOCKED | USER | USER | n/a |
 | #20 | `apps/chatgpt-cleaner` / Google Auth provider setup | BLOCKED | USER | USER | n/a |
+| #29 | `apps/chatgpt-cleaner` / cleanup overlay open recovery | RUNNING | CURSOR | SELF | `fix/cleanup-overlay-open-recovery` |
 
 Concurrent active tasks are allowed only when their declared write scopes are disjoint. See `docs/COLLABORATION.md`.
 
@@ -30,8 +31,8 @@ Concurrent active tasks are allowed only when their declared write scopes are di
 
 ## Next planned product work
 
-1. USER: #20 Google OAuth setup; #15 live Archive/Delete.
-2. After both, close epic #6.
+1. Land #29 cleanup overlay open recovery.
+2. USER: #20 Google OAuth setup; #15 live Archive/Delete.
 
 ## Blockers / decisions needed
 
