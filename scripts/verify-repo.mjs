@@ -59,7 +59,7 @@ if (existsSync(cursorRulesDir)) {
       continue;
     }
 
-    const content = readFileSync(join(cursorRulesDir, name), "utf8");
+    const content = readFileSync(join(cursorRulesDir, name), "utf8").replaceAll("\r\n", "\n");
     if (!content.startsWith("---\n") || !content.includes("\ndescription:")) {
       errors.push(`Cursor rule is missing valid frontmatter/description: .cursor/rules/${name}`);
     }

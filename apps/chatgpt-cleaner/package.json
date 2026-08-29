@@ -1,5 +1,28 @@
 {
   "name": "@chrome-ext/chatgpt-cleaner",
   "private": true,
-  "version": "0.0.0"
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "build": "wxt build",
+    "zip": "wxt zip",
+    "postinstall": "wxt prepare",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@chrome-ext/design-system": "workspace:*"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.55.0",
+    "@types/chrome": "0.1.4",
+    "happy-dom": "20.0.2",
+    "typescript": "7.0.2",
+    "vitest": "3.2.4",
+    "wxt": "0.21.4"
+  }
 }
