@@ -11,11 +11,11 @@ export interface ShellRenderOptions {
 export function renderShell({ kind, root, theme = "system" }: ShellRenderOptions): void {
   applyTheme(theme, root.ownerDocument.documentElement);
 
-  const title = kind === "popup" ? "ChatGPT Cleaner" : "Conversation Vault";
+  const title = kind === "popup" ? "ChatGPT 대화 정리" : "대화 보관함";
   const subtitle =
     kind === "popup"
-      ? "Launcher shell. Cleanup and Vault actions wire up in later phases."
-      : "Vault shell. Saved snapshots will render here after local/cloud phases.";
+      ? "런처 셸입니다. 정리와 보관함 동작은 이후 단계에서 연결됩니다."
+      : "보관함 셸입니다. 저장한 스냅샷이 여기에 표시됩니다.";
 
   root.replaceChildren();
   root.className = "ce-shell";

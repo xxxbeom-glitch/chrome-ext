@@ -29,7 +29,7 @@ export class UnconfiguredCloudVaultRepository implements CloudVaultRepository {
   async saveSnapshot(): Promise<VaultSaveResult> {
     return {
       ok: false,
-      error: "Supabase is not configured or the user is signed out",
+      error: "Supabase가 설정되지 않았거나 로그아웃 상태입니다",
       preservedExisting: true,
     };
   }

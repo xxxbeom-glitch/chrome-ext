@@ -44,7 +44,7 @@ export async function runCleanupOperation(
     return input.targets.map((target) => ({
       sourceId: target.sourceId,
       status: "skipped",
-      errorMessage: "duplicate operation id",
+      errorMessage: "중복된 작업입니다",
     }));
   }
   seenOperationIds.add(input.operationId);
@@ -56,7 +56,7 @@ export async function runCleanupOperation(
     return targets.map((target) => ({
       sourceId: target.sourceId,
       status: "failed",
-      errorMessage: "Archive unavailable: compatibility gate closed",
+      errorMessage: "보관 불가: ChatGPT 호환성이 확인되지 않았습니다",
     }));
   }
 
@@ -64,7 +64,7 @@ export async function runCleanupOperation(
     return targets.map((target) => ({
       sourceId: target.sourceId,
       status: "failed",
-      errorMessage: "Delete unavailable: compatibility gate closed",
+      errorMessage: "삭제 불가: ChatGPT 호환성이 확인되지 않았습니다",
     }));
   }
 
@@ -88,7 +88,7 @@ export async function runCleanupOperation(
           results[current] = {
             sourceId: target.sourceId,
             status: "failed",
-            errorMessage: "unknown operation kind",
+            errorMessage: "알 수 없는 작업입니다",
           };
           continue;
         }
@@ -97,7 +97,7 @@ export async function runCleanupOperation(
         results[current] = {
           sourceId: target.sourceId,
           status: "failed",
-          errorMessage: error instanceof Error ? error.message : "unknown mutation failure",
+          errorMessage: error instanceof Error ? error.message : "작업에 실패했습니다",
         };
       }
     }

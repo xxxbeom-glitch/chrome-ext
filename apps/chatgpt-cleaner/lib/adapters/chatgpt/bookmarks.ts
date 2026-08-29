@@ -39,24 +39,24 @@ export interface BookmarkControlHandle {
 function applyStatus(button: HTMLButtonElement, status: BookmarkSaveStatus, detail?: string): void {
   switch (status) {
     case "saving":
-      button.textContent = "Saving…";
+      button.textContent = "저장 중...";
       button.disabled = true;
-      button.title = "Saving snapshot to Vault";
+      button.title = "보관함에 저장하는 중";
       break;
     case "saved":
-      button.textContent = "Saved";
+      button.textContent = "저장됨";
       button.disabled = false;
-      button.title = detail ?? "Saved to Vault";
+      button.title = detail ?? "보관함에 저장됨";
       break;
     case "failed":
-      button.textContent = "Retry";
+      button.textContent = "다시 시도";
       button.disabled = false;
-      button.title = detail ?? "Save failed";
+      button.title = detail ?? "저장 실패";
       break;
     default:
-      button.textContent = "Vault";
+      button.textContent = "보관함";
       button.disabled = false;
-      button.title = "Save conversation to Vault";
+      button.title = "대화를 보관함에 저장";
   }
 }
 
@@ -75,7 +75,7 @@ export function injectBookmarkControls(
 
     const button = doc.createElement("button");
     button.type = "button";
-    button.setAttribute("aria-label", "Save conversation to Vault");
+    button.setAttribute("aria-label", "대화를 보관함에 저장");
     button.setAttribute(BOOKMARK_ATTR, "true");
     button.setAttribute(BOOKMARK_KEY_ATTR, target.key);
     button.style.marginInlineStart = "8px";

@@ -19,12 +19,23 @@ async function send(type: "tabs.openChatgpt" | "tabs.openVault", openCleanup = f
 
 function sessionLabel(state: AuthSessionState): string {
   if (state.status === "unconfigured") {
-    return "Cloud sync unconfigured (set WXT_PUBLIC_SUPABASE_*). Bookmarks stay local.";
+    return "클라우드 동기화가 설정되지 않았습니다. 북마크는 기기에만 저장됩니다.";
   }
   if (state.status === "signed_out") {
-    return "Signed out. Bookmarks save locally until you sign in.";
+    return "로그아웃 상태입니다. 로그인 전까지 북마크는 기기에만 저장됩니다.";
   }
-  return `Signed in${state.email ? ` as ${state.email}` : ""}. Bookmarks save to cloud Vault.`;
+  return `로그인됨${state.email ? ` · ${state.email}` : ""}. 북마크는 클라우드 보관함에 저장됩니다.`;
+}
+
+function themeLabel(mode: StoredThemeMode): string {
+  switch (mode) {
+    case "light":
+      return "라이트";
+    case "dark":
+      return "다크";
+    default:
+      return "시스템";
+  }
 }
 
 async function init(): Promise<void> {
@@ -38,11 +49,12 @@ async function init(): Promise<void> {
   app.className = "ce-popup";
 
   const title = document.createElement("h1");
-  title.textContent = "ChatGPT Cleaner";
+  title.textContent = "ChatGPT 대화 정리";
 
   const subtitle = document.createElement("p");
   subtitle.className = "ce-popup__subtitle";
-  subtitle.textContent = "Launcher hub. Cleanup runs inside ChatGPT; Vault opens as an extension page.";
+  subtitle.textContent =
+    "정리는 ChatGPT 안에서, 북마크한 대화는 보관함 페이지에서 확인합니다.";
 
   const actions = document.createElement("div");
   actions.className = "ce-popup__actions";
@@ -50,19 +62,19 @@ async function init(): Promise<void> {
   const openChatgpt = document.createElement("button");
   openChatgpt.type = "button";
   openChatgpt.className = "ce-button ce-button--primary";
-  openChatgpt.textContent = "Open ChatGPT";
+  openChatgpt.textContent = "ChatGPT 열기";
   openChatgpt.addEventListener("click", () => void send("tabs.openChatgpt"));
 
   const cleanUp = document.createElement("button");
   cleanUp.type = "button";
   cleanUp.className = "ce-button ce-button--primary";
-  cleanUp.textContent = "Clean up conversations";
+  cleanUp.textContent = "대화방 정리하기";
   cleanUp.addEventListener("click", () => void send("tabs.openChatgpt", true));
 
   const vault = document.createElement("button");
   vault.type = "button";
   vault.className = "ce-button ce-button--secondary";
-  vault.textContent = "Bookmarked conversations";
+  vault.textContent = "북마크한 대화";
   vault.addEventListener("click", () => void send("tabs.openVault"));
 
   actions.append(openChatgpt, cleanUp, vault);
@@ -81,13 +93,13 @@ async function init(): Promise<void> {
     const state = await getAuthSessionState();
     authStatus.textContent = sessionLabel(state);
     if (!isSupabaseConfigured() || state.status === "unconfigured") {
-      authButton.textContent = "Cloud setup required";
+      authButton.textContent = "클라우드 설정 필요";
       authButton.disabled = true;
       return;
     }
     authButton.disabled = false;
     if (state.status === "signed_in") {
-      authButton.textContent = "Sign out";
+      authButton.textContent = "로그아웃";
       authButton.onclick = () => {
         void (async () => {
           authButton.disabled = true;
@@ -97,14 +109,14 @@ async function init(): Promise<void> {
       };
       return;
     }
-    authButton.textContent = "Sign in with Google";
+    authButton.textContent = "Google로 로그인";
     authButton.onclick = () => {
       void (async () => {
         authButton.disabled = true;
-        authStatus.textContent = "Starting Google sign-in…";
+        authStatus.textContent = "Google 로그인 시작 중…";
         const result = await startGoogleSignIn();
         if (!result.ok) {
-          authStatus.textContent = `Sign-in failed: ${result.error}`;
+          authStatus.textContent = `로그인 실패: ${result.error}`;
           authButton.disabled = false;
           return;
         }
@@ -118,13 +130,13 @@ async function init(): Promise<void> {
 
   const themeRow = document.createElement("label");
   themeRow.className = "ce-popup__theme";
-  themeRow.textContent = "Theme";
+  themeRow.textContent = "테마";
   const themeSelect = document.createElement("select");
-  themeSelect.setAttribute("aria-label", "Theme mode");
+  themeSelect.setAttribute("aria-label", "테마");
   for (const mode of ["system", "light", "dark"] as StoredThemeMode[]) {
     const option = document.createElement("option");
     option.value = mode;
-    option.textContent = mode;
+    option.textContent = themeLabel(mode);
     if (mode === theme) option.selected = true;
     themeSelect.append(option);
   }

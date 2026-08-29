@@ -20,7 +20,7 @@ export function discoverConversationsFromDom(doc: Document): DiscoveryPage {
     if (!sourceId || seen.has(sourceId)) continue;
     seen.add(sourceId);
 
-    const title = (anchor.textContent ?? "").trim() || `Conversation ${sourceId.slice(0, 8)}`;
+    const title = (anchor.textContent ?? "").trim() || `대화 ${sourceId.slice(0, 8)}`;
     items.push({
       sourceId,
       title,

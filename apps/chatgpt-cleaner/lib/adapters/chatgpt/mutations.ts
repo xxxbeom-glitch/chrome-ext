@@ -21,15 +21,15 @@ export function createFailClosedMutationAdapter(
     capabilities,
     async archive(sourceId: string): Promise<void> {
       if (!capabilities.canArchive) {
-        throw new Error(`Archive blocked for ${sourceId}: compatibility gate closed`);
+        throw new Error(`보관 차단됨 (${sourceId}): ChatGPT 호환성이 확인되지 않았습니다`);
       }
-      throw new Error(`Archive adapter not bound for ${sourceId}`);
+      throw new Error(`보관 어댑터가 아직 연결되지 않았습니다 (${sourceId})`);
     },
     async delete(sourceId: string): Promise<void> {
       if (!capabilities.canDelete) {
-        throw new Error(`Delete blocked for ${sourceId}: compatibility gate closed`);
+        throw new Error(`삭제 차단됨 (${sourceId}): ChatGPT 호환성이 확인되지 않았습니다`);
       }
-      throw new Error(`Delete adapter not bound for ${sourceId}`);
+      throw new Error(`삭제 어댑터가 아직 연결되지 않았습니다 (${sourceId})`);
     },
   };
 }

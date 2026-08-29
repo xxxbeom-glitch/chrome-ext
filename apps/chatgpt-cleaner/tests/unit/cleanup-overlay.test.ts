@@ -15,10 +15,10 @@ describe("cleanup overlay shell", () => {
     const host = document.querySelector("#ce-chatgpt-cleaner-host");
     expect(host?.shadowRoot).toBeTruthy();
     const shadow = host!.shadowRoot!;
-    expect(shadow.textContent).toContain("Clean up conversations");
+    expect(shadow.textContent).toContain("대화방 정리하기");
 
     const deleteButtons = Array.from(shadow.querySelectorAll("button")).filter(
-      (button) => button.textContent === "Delete",
+      (button) => button.textContent === "삭제",
     );
     expect(deleteButtons.length).toBeGreaterThan(0);
     deleteButtons[0]!.click();
@@ -27,7 +27,7 @@ describe("cleanup overlay shell", () => {
 
     shadow.querySelector<HTMLButtonElement>("[data-action='confirm-cancel']")!.click();
     expect(mutator.deleteCalls).toEqual([]);
-    expect(shadow.textContent).toContain("Delete cancelled");
+    expect(shadow.textContent).toContain("삭제를 취소했습니다");
   });
 
   it("traps Escape to close without mutating", () => {

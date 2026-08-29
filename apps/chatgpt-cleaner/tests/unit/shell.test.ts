@@ -20,7 +20,7 @@ describe("renderShell", () => {
     renderShell({ kind: "popup", root, theme: "light" });
 
     expect(applyTheme).toHaveBeenCalledWith("light", document.documentElement);
-    expect(root.querySelector("h1")?.textContent).toBe("ChatGPT Cleaner");
+    expect(root.querySelector("h1")?.textContent).toBe("ChatGPT 대화 정리");
     expect(root.textContent).toContain("Phase 0 · popup");
   });
 
@@ -30,7 +30,7 @@ describe("renderShell", () => {
 
     renderShell({ kind: "vault", root });
 
-    expect(root.querySelector("h1")?.textContent).toBe("Conversation Vault");
+    expect(root.querySelector("h1")?.textContent).toBe("대화 보관함");
     expect(root.textContent).toContain("Phase 0 · vault");
   });
 });

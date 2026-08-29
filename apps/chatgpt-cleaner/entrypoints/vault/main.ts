@@ -5,6 +5,10 @@ import { vaultService } from "../../lib/domain/vault/service";
 import type { VaultRecord } from "../../lib/domain/vault/local-repository";
 import type { VaultConversationDetail } from "../../lib/domain/types";
 
+function completenessLabel(value: VaultRecord["completeness"]): string {
+  return value === "complete" ? "완료" : "부분";
+}
+
 function toDetail(record: VaultRecord): VaultConversationDetail {
   return {
     id: record.id,
@@ -55,7 +59,7 @@ async function init(): Promise<void> {
   app.className = "ce-vault";
 
   const title = document.createElement("h1");
-  title.textContent = "Conversation Vault";
+  title.textContent = "대화 보관함";
 
   const subtitle = document.createElement("p");
   subtitle.className = "ce-vault__subtitle";
@@ -65,7 +69,7 @@ async function init(): Promise<void> {
 
   const list = document.createElement("ul");
   list.className = "ce-vault__list";
-  list.setAttribute("aria-label", "Saved conversations");
+  list.setAttribute("aria-label", "저장된 대화");
 
   const reader = document.createElement("section");
   reader.className = "ce-vault__reader";
@@ -78,7 +82,7 @@ async function init(): Promise<void> {
     reader.replaceChildren();
     if (!record) {
       const empty = document.createElement("p");
-      empty.textContent = "Snapshot unavailable.";
+      empty.textContent = "스냅샷을 찾을 수 없습니다.";
       reader.append(empty);
       return;
     }
@@ -88,10 +92,10 @@ async function init(): Promise<void> {
     const deleteBtn = document.createElement("button");
     deleteBtn.type = "button";
     deleteBtn.className = "ce-button ce-button--danger";
-    deleteBtn.textContent = "Delete Vault copy";
+    deleteBtn.textContent = "보관함 사본 삭제";
     deleteBtn.addEventListener("click", () => {
       const confirmed = window.confirm(
-        `Delete Vault copy "${record.title}"? This does not delete the ChatGPT source.`,
+        `보관함 사본 "${record.title}"을(를) 삭제할까요? ChatGPT 원본 대화는 삭제되지 않습니다.`,
       );
       if (!confirmed) return;
       void vaultService.deleteVaultOnly(record.id).then((deleted) => {
@@ -105,8 +109,8 @@ async function init(): Promise<void> {
     const backend = await vaultService.backend();
     subtitle.textContent =
       backend === "cloud"
-        ? "Cloud Vault (signed in). Deleting here never deletes ChatGPT source conversations."
-        : "Local development Vault. Sign in from the popup to sync to cloud. Deleting here never deletes ChatGPT source conversations.";
+        ? "클라우드 보관함(로그인됨). 여기서 삭제해도 ChatGPT 원본은 지우지 않습니다."
+        : "로컬 보관함. 팝업에서 로그인하면 클라우드와 동기화됩니다. 여기서 삭제해도 ChatGPT 원본은 지우지 않습니다.";
 
     list.replaceChildren();
     records = await vaultService.list();
@@ -115,12 +119,12 @@ async function init(): Promise<void> {
       empty.className = "ce-empty";
       empty.textContent =
         backend === "cloud"
-          ? "No cloud Vault snapshots yet. Use the ChatGPT bookmark control to capture one."
-          : "No local Vault snapshots yet. Use the ChatGPT bookmark control to capture one.";
+          ? "클라우드 보관함에 저장된 대화가 없습니다. ChatGPT에서 북마크 버튼으로 저장해 보세요."
+          : "로컬 보관함에 저장된 대화가 없습니다. ChatGPT에서 북마크 버튼으로 저장해 보세요.";
       list.append(empty);
       reader.replaceChildren();
       const hint = document.createElement("p");
-      hint.textContent = "Saved snapshots will appear here.";
+      hint.textContent = "저장한 스냅샷이 여기에 나타납니다.";
       reader.append(hint);
       return;
     }
@@ -133,7 +137,7 @@ async function init(): Promise<void> {
       const itemTitle = document.createElement("span");
       itemTitle.textContent = record.title;
       const meta = document.createElement("span");
-      meta.textContent = `${record.completeness} · ${record.bookmarks.length} bookmarks`;
+      meta.textContent = `${completenessLabel(record.completeness)} · 북마크 ${record.bookmarks.length}개`;
       button.append(itemTitle, meta);
       button.addEventListener("click", () => void showDetail(record.id));
       item.append(button);

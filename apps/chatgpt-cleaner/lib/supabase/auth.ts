@@ -35,12 +35,12 @@ export async function startGoogleSignIn(): Promise<{ ok: true } | { ok: false; e
   const config = readSupabasePublicConfig();
   const client = getSupabaseClient();
   if (!config || !client) {
-    return { ok: false, error: "Supabase public config is missing" };
+    return { ok: false, error: "Supabase 공개 설정이 없습니다" };
   }
 
   const redirectTo = config.authRedirectUrl ?? extensionRedirectUrl();
   if (!redirectTo) {
-    return { ok: false, error: "chrome.identity redirect URL is unavailable" };
+    return { ok: false, error: "chrome.identity 리다이렉트 URL을 사용할 수 없습니다" };
   }
 
   const { data, error } = await client.auth.signInWithOAuth({
@@ -56,11 +56,11 @@ export async function startGoogleSignIn(): Promise<{ ok: true } | { ok: false; e
   });
 
   if (error || !data.url) {
-    return { ok: false, error: error?.message ?? "Failed to start Google OAuth" };
+    return { ok: false, error: error?.message ?? "Google 로그인을 시작하지 못했습니다" };
   }
 
   if (typeof browser === "undefined" || !browser.identity?.launchWebAuthFlow) {
-    return { ok: false, error: "chrome.identity.launchWebAuthFlow is unavailable" };
+    return { ok: false, error: "chrome.identity.launchWebAuthFlow를 사용할 수 없습니다" };
   }
 
   try {
@@ -69,7 +69,7 @@ export async function startGoogleSignIn(): Promise<{ ok: true } | { ok: false; e
       interactive: true,
     });
     if (!responseUrl) {
-      return { ok: false, error: "OAuth flow returned no redirect URL" };
+      return { ok: false, error: "OAuth 리다이렉트 URL이 없습니다" };
     }
 
     const redirected = new URL(responseUrl);
@@ -78,7 +78,7 @@ export async function startGoogleSignIn(): Promise<{ ok: true } | { ok: false; e
       return {
         ok: false,
         error:
-          "OAuth redirect missing authorization code. Ensure Supabase client uses PKCE (flowType=pkce) and the chromiumapp.org redirect is allowlisted.",
+          "인증 코드가 없습니다. PKCE(flowType=pkce)와 chromiumapp.org 리다이렉트 허용 목록을 확인해 주세요.",
       };
     }
 
@@ -90,7 +90,7 @@ export async function startGoogleSignIn(): Promise<{ ok: true } | { ok: false; e
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "OAuth flow failed",
+      error: error instanceof Error ? error.message : "로그인에 실패했습니다",
     };
   }
 }
