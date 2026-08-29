@@ -71,7 +71,12 @@ if (existsSync(cursorRulesDir)) {
 const currentPath = join(root, "CURRENT.md");
 if (existsSync(currentPath)) {
   const current = readFileSync(currentPath, "utf8");
-  for (const marker of ["## Active work", "Current owner:", "## Blockers / decisions needed", "## Recovery rule"]) {
+  for (const marker of [
+    "## Active work",
+    "| Issue | App / scope | State | Owner | Branch |",
+    "## Blockers / decisions needed",
+    "## Recovery rule",
+  ]) {
     if (!current.includes(marker)) {
       errors.push(`CURRENT.md is missing required marker: ${marker}`);
     }
@@ -96,9 +101,16 @@ if (existsSync(collaborationPath)) {
       errors.push(`Collaboration contract is missing state: ${state}`);
     }
   }
-  for (const marker of ["STATE: RUNNING", "OWNER: CURSOR", "STATE: REVIEW", "OWNER: CHATGPT"]) {
+  for (const marker of [
+    "STATE: RUNNING",
+    "OWNER: CURSOR",
+    "STATE: REVIEW",
+    "OWNER: CHATGPT",
+    "latest valid `STATE:` + `OWNER:` pair",
+    "write scopes are disjoint",
+  ]) {
     if (!collaboration.includes(marker)) {
-      errors.push(`Collaboration contract is missing handoff marker: ${marker}`);
+      errors.push(`Collaboration contract is missing handoff/concurrency marker: ${marker}`);
     }
   }
 }
