@@ -1,14 +1,94 @@
 import type { CleanupCapabilities, CleanupMutator } from "../../domain/cleanup/engine";
+import { fetchSessionToken, type HistoryFetch } from "./private-web/conversations";
 
 /**
- * DOM mutation adapters are intentionally gated.
- * Until Archive/Delete controls are positively located for the current ChatGPT UI,
- * capabilities remain false and the mutator refuses to act.
+ * Mutation adapters stay behind an explicit capability gate. The live adapter uses
+ * the same same-origin ChatGPT web requests as the current site and keeps the
+ * access token in content-script memory only.
  */
 export interface DomMutationAdapter extends CleanupMutator {
   capabilities: CleanupCapabilities;
 }
 
+export interface PrivateWebMutationOptions {
+  fetchImpl?: HistoryFetch;
+}
+
+const CONVERSATION_MUTATION_PATH = "/backend-api/conversation";
+
+function conversationMutationUrl(sourceId: string): string {
+  return `${CONVERSATION_MUTATION_PATH}/${encodeURIComponent(sourceId)}`;
+}
+
+async function mutationError(response: Response, action: "보관" | "삭제"): Promise<Error> {
+  const detail = (await response.text().catch(() => "")).replace(/\s+/g, " ").trim().slice(0, 160);
+  const suffix = detail ? `: ${detail}` : "";
+  return new Error(`${action} 실패 (${response.status})${suffix}`);
+}
+
+/**
+ * Live ChatGPT mutator.
+ *
+ * Evidence as of 2026-08-29:
+ * - archive: PATCH /backend-api/conversation/{id} { is_archived: true }
+ * - delete:  PATCH /backend-api/conversation/{id} { is_visible: false }
+ *
+ * No automatic retry is performed for destructive operations. A failed item stays
+ * visible/selected so the user can explicitly retry it.
+ */
+export function createPrivateWebMutationAdapter(
+  options: PrivateWebMutationOptions = {},
+): DomMutationAdapter {
+  const fetchImpl = options.fetchImpl ?? globalThis.fetch.bind(globalThis);
+  let accessToken: string | null = null;
+
+  const capabilities: CleanupCapabilities = {
+    canArchive: true,
+    canDelete: true,
+  };
+
+  async function token(): Promise<string> {
+    if (accessToken) return accessToken;
+    accessToken = await fetchSessionToken(fetchImpl);
+    return accessToken;
+  }
+
+  async function patch(
+    sourceId: string,
+    body: { is_archived: true } | { is_visible: false },
+    action: "보관" | "삭제",
+  ): Promise<void> {
+    if (!sourceId.trim()) throw new Error(`${action} 대상 대화 ID가 없습니다`);
+    const authToken = await token();
+    const response = await fetchImpl(conversationMutationUrl(sourceId), {
+      method: "PATCH",
+      credentials: "include",
+      cache: "no-store",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+        authorization: `Bearer ${authToken}`,
+      },
+      body: JSON.stringify(body),
+    });
+    if (response.status === 401 || response.status === 403) {
+      accessToken = null;
+    }
+    if (!response.ok) throw await mutationError(response, action);
+  }
+
+  return {
+    capabilities,
+    archive(sourceId: string) {
+      return patch(sourceId, { is_archived: true }, "보관");
+    },
+    delete(sourceId: string) {
+      return patch(sourceId, { is_visible: false }, "삭제");
+    },
+  };
+}
+
+/** Fail-closed adapter retained for fixtures/tests and compatibility fallback. */
 export function createFailClosedMutationAdapter(
   overrides?: Partial<CleanupCapabilities>,
 ): DomMutationAdapter {
