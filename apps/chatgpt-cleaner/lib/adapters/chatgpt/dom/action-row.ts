@@ -3,6 +3,7 @@ import {
   BOOKMARK_COMPAT_ATTR,
   CHATGPT_SELECTORS,
 } from "./selectors";
+import type { SnapshotMessage } from "../types";
 
 export const ASSISTANT_ACTION_ROW_REASON =
   "assistant action rows not found (copy-turn-action-button / message-actions group)";
@@ -53,22 +54,32 @@ function isTurnRoot(el: Element): boolean {
   );
 }
 
-export function isAssistantContext(el: Element): boolean {
+export function messageRoleForElement(el: Element): SnapshotMessage["role"] {
   const roleHost = el.closest("[data-message-author-role]");
-  if (roleHost) {
-    return roleHost.getAttribute("data-message-author-role") === "assistant";
+  const directRole = roleHost?.getAttribute("data-message-author-role")?.toLowerCase();
+  if (
+    directRole === "user" ||
+    directRole === "assistant" ||
+    directRole === "system" ||
+    directRole === "tool"
+  ) {
+    return directRole;
   }
+
   const turn = el.closest("[data-turn]");
-  if (turn) {
-    return turn.getAttribute("data-turn") === "assistant";
-  }
+  const turnRole = turn?.getAttribute("data-turn")?.toLowerCase();
+  if (turnRole === "user" || turnRole === "assistant") return turnRole;
+
   const convTurn = el.closest('[data-testid^="conversation-turn"]');
   if (convTurn) {
-    if (convTurn.getAttribute("data-turn") === "user") return false;
-    if (convTurn.getAttribute("data-turn") === "assistant") return true;
-    return convTurn.querySelector('[data-message-author-role="assistant"]') != null;
+    if (convTurn.querySelector('[data-message-author-role="user"]')) return "user";
+    if (convTurn.querySelector('[data-message-author-role="assistant"]')) return "assistant";
   }
-  return true;
+  return "unknown";
+}
+
+export function isAssistantContext(el: Element): boolean {
+  return messageRoleForElement(el) === "assistant";
 }
 
 export function resolveAssistantActionRow(from: Element): Element {
@@ -78,9 +89,7 @@ export function resolveAssistantActionRow(from: Element): Element {
   let best: Element | null = from.parentElement;
   let node = from.parentElement;
   for (let i = 0; i < 6 && node && !isTurnRoot(node); i += 1) {
-    if (node.querySelectorAll("button").length >= 2) {
-      best = node;
-    }
+    if (node.querySelectorAll("button").length >= 1) best = node;
     node = node.parentElement;
   }
   return best ?? from.parentElement ?? from;
@@ -89,11 +98,9 @@ export function resolveAssistantActionRow(from: Element): Element {
 function isTurnCopyButton(button: Element): boolean {
   if (isCodeCopyContext(button)) return false;
   const testid = button.getAttribute("data-testid") ?? "";
-  if (testid === "copy-turn-action-button" || testid.includes("copy-turn")) {
-    return true;
-  }
+  if (testid === "copy-turn-action-button" || testid.includes("copy-turn")) return true;
   const aria = normalizeName(button.getAttribute("aria-label"));
-  return TURN_COPY_ARIA.has(aria) && isAssistantContext(button);
+  return TURN_COPY_ARIA.has(aria) && messageRoleForElement(button) !== "unknown";
 }
 
 function collectCopyButtons(doc: Document): Element[] {
@@ -119,11 +126,22 @@ function preferInnermost(rows: Element[]): Element[] {
   return unique.filter((row) => !unique.some((other) => other !== row && row.contains(other)));
 }
 
-export function locateAssistantActionRows(doc: Document): Element[] {
+export function locateTurnActionRows(doc: Document): Element[] {
   return preferInnermost([...collectLegacyRows(doc), ...collectCopyAnchoredRows(doc)]);
 }
 
-export function markBookmarkCompatibility(doc: Document, rowCount = locateAssistantActionRows(doc).length): number {
+export function locateAssistantActionRows(doc: Document): Element[] {
+  return locateTurnActionRows(doc).filter((row) => messageRoleForElement(row) === "assistant");
+}
+
+export function locateUserActionRows(doc: Document): Element[] {
+  return locateTurnActionRows(doc).filter((row) => messageRoleForElement(row) === "user");
+}
+
+export function markBookmarkCompatibility(
+  doc: Document,
+  rowCount = locateAssistantActionRows(doc).length,
+): number {
   doc.documentElement.setAttribute(
     BOOKMARK_COMPAT_ATTR,
     rowCount > 0 ? "ok" : "missing-action-row",
@@ -143,9 +161,7 @@ function findNamedControl(row: Element, names: Set<string>): Element | null {
   const controls = Array.from(row.querySelectorAll("button, [role='button']"));
   for (const control of controls) {
     if (control.getAttribute(BOOKMARK_ATTR) === "true") continue;
-    if (controlNames(control).some((name) => names.has(name))) {
-      return control;
-    }
+    if (controlNames(control).some((name) => names.has(name))) return control;
   }
   return null;
 }
@@ -160,9 +176,7 @@ export function findSourcesActionControl(row: Element): Element | null {
 
 function rowChildContaining(row: Element, el: Element): Element | null {
   let node: Element | null = el;
-  while (node && node.parentElement !== row) {
-    node = node.parentElement;
-  }
+  while (node && node.parentElement !== row) node = node.parentElement;
   return node?.parentElement === row ? node : null;
 }
 
@@ -190,11 +204,14 @@ export function findAssociatedMessage(row: Element): Element | null {
 
   const turn = row.closest('[data-testid^="conversation-turn"], [data-turn]');
   if (turn) {
-    return (
-      turn.querySelector('[data-message-author-role="assistant"]') ??
-      turn.querySelector("[data-message-author-role]") ??
-      turn
-    );
+    const role = messageRoleForElement(row);
+    if (role === "user") {
+      return turn.querySelector('[data-message-author-role="user"]') ?? turn;
+    }
+    if (role === "assistant") {
+      return turn.querySelector('[data-message-author-role="assistant"]') ?? turn;
+    }
+    return turn.querySelector("[data-message-author-role]") ?? turn;
   }
 
   return row.closest(CHATGPT_SELECTORS.messageArticle);
