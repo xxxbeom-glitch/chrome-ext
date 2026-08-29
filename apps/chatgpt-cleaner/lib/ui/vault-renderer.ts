@@ -1,16 +1,21 @@
-import type { VaultConversationDetail, VaultMessageBlock } from "../domain/types";
+import type {
+  VaultConversationDetail,
+  VaultItemDetail,
+  VaultMessageBlock,
+  VaultMessage,
+} from "../domain/types";
 import { safeExternalHref } from "../security/safe-url";
 
 function appendText(parent: HTMLElement, text: string): void {
   parent.append(parent.ownerDocument.createTextNode(text));
 }
 
-function roleLabel(role: VaultConversationDetail["messages"][number]["role"]): string {
+function roleLabel(role: VaultMessage["role"]): string {
   switch (role) {
     case "user":
-      return "사용자";
+      return "질문";
     case "assistant":
-      return "어시스턴트";
+      return "답변";
     case "system":
       return "시스템";
     case "tool":
@@ -26,7 +31,9 @@ export function renderVaultBlock(parent: HTMLElement, block: VaultMessageBlock):
     case "paragraph":
     case "heading":
     case "quote": {
-      const el = doc.createElement(block.type === "heading" ? "h3" : block.type === "quote" ? "blockquote" : "p");
+      const el = doc.createElement(
+        block.type === "heading" ? "h3" : block.type === "quote" ? "blockquote" : "p",
+      );
       appendText(el, block.text ?? "");
       parent.append(el);
       return;
@@ -82,6 +89,42 @@ export function renderVaultBlock(parent: HTMLElement, block: VaultMessageBlock):
   }
 }
 
+/** Canonical V1 reader: one saved question/answer only. */
+export function renderVaultItemDetail(root: HTMLElement, detail: VaultItemDetail): void {
+  const doc = root.ownerDocument;
+  root.replaceChildren();
+
+  const header = doc.createElement("header");
+  header.className = "ce-vault-detail__header";
+  const title = doc.createElement("h2");
+  title.textContent = roleLabel(detail.role);
+  const sourceMeta = doc.createElement("p");
+  sourceMeta.textContent = `원본 대화: ${detail.sourceConversationTitle} · 저장 ${detail.updatedAt}`;
+  header.append(title, sourceMeta);
+
+  const sourceHref = safeExternalHref(detail.sourceUrl);
+  if (sourceHref) {
+    const source = doc.createElement("a");
+    source.href = sourceHref;
+    source.target = "_blank";
+    source.rel = "noopener noreferrer";
+    source.textContent = "ChatGPT에서 원본 대화 열기";
+    header.append(source);
+  }
+
+  const article = doc.createElement("article");
+  article.className = "ce-vault-message";
+  article.dataset.ordinal = String(detail.messageOrdinal);
+  const role = doc.createElement("p");
+  role.className = "ce-vault-message__role";
+  role.textContent = roleLabel(detail.role);
+  article.append(role);
+  for (const block of detail.blocks) renderVaultBlock(article, block);
+
+  root.append(header, article);
+}
+
+/** Legacy whole-conversation renderer retained for old local/fixture data. */
 export function renderVaultDetail(root: HTMLElement, detail: VaultConversationDetail): void {
   const doc = root.ownerDocument;
   root.replaceChildren();
@@ -133,9 +176,7 @@ export function renderVaultDetail(root: HTMLElement, detail: VaultConversationDe
     role.className = "ce-vault-message__role";
     role.textContent = roleLabel(message.role);
     article.append(role);
-    for (const block of message.blocks) {
-      renderVaultBlock(article, block);
-    }
+    for (const block of message.blocks) renderVaultBlock(article, block);
     messages.append(article);
   }
 
