@@ -13,10 +13,11 @@ Last updated: 2026-08-29
 
 ## Active work
 
-- Active Issue: #1 — Establish GitHub collaboration hub for ChatGPT ↔ Cursor.
-- State: RUNNING
-- Current owner: ChatGPT
-- Next owner: ChatGPT until the collaboration contract is completed and verified.
+| Issue | App / scope | State | Owner | Branch |
+| --- | --- | --- | --- | --- |
+| #1 | repo / collaboration foundation | RUNNING | CHATGPT | main |
+
+Concurrent active tasks are allowed only when their declared write scopes are disjoint. See `docs/COLLABORATION.md`.
 
 ## Current repository baseline
 
@@ -26,6 +27,7 @@ Last updated: 2026-08-29
 - Shared light/dark/system design tokens.
 - Pretendard bundled locally through `@chrome-ext/design-system`.
 - Cursor project rules and nested app `AGENTS.md` convention.
+- GitHub Issues/PRs/CI collaboration contract with explicit task ownership.
 
 ## Next planned product work
 
@@ -35,17 +37,17 @@ Last updated: 2026-08-29
 
 ## Blockers / decisions needed
 
-- None.
+- Local Cursor preflight (`pnpm agent:check`) still needs one real run on the user's development machine after pulling the latest main, because GitHub Actions cannot validate the user's local `gh` authentication.
 
 ## Recovery rule
 
 Any agent resuming work must read in this order:
 
-1. `CURRENT.md`
-2. active GitHub Issue referenced above
-3. `AGENTS.md`
+1. `CURRENT.md` and the full active-work table
+2. the target active GitHub Issue and its latest valid `STATE:` / `OWNER:` header
+3. `AGENTS.md` and matching `.cursor/rules/*.mdc`
 4. relevant app `AGENTS.md` and `docs/SPEC.md`, `docs/PERMISSIONS.md`, `docs/QA.md`
 5. relevant `docs/decisions/`
-6. related PR / CI evidence
+6. related PR / commit / CI evidence
 
 Do not infer current state from old chat history when repository state is available.
