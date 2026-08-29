@@ -1,5 +1,7 @@
 import type { ConversationSnapshot } from "../adapters/chatgpt/types";
 import type { VaultRecord, VaultSaveResult } from "../domain/vault/local-repository";
+import { isSupabaseConfigured } from "./config";
+import { SupabaseCloudVaultRepository } from "./cloud-vault-repository";
 
 export interface CloudVaultRepository {
   list(): Promise<VaultRecord[]>;
@@ -17,8 +19,7 @@ export interface CloudVaultRepository {
 }
 
 /**
- * Placeholder cloud repository. Real Supabase CRUD wires in Phase 6 once auth session works.
- * Phase 5 only establishes the typed boundary and fail-soft behavior when unconfigured.
+ * Fail-soft cloud repository used when Supabase public config is absent.
  */
 export class UnconfiguredCloudVaultRepository implements CloudVaultRepository {
   async list(): Promise<VaultRecord[]> {
@@ -42,8 +43,9 @@ export class UnconfiguredCloudVaultRepository implements CloudVaultRepository {
   }
 }
 
-export function createCloudVaultRepository(configured: boolean): CloudVaultRepository {
+export function createCloudVaultRepository(
+  configured: boolean = isSupabaseConfigured(),
+): CloudVaultRepository {
   if (!configured) return new UnconfiguredCloudVaultRepository();
-  // Phase 6 replaces this with the authenticated Supabase implementation.
-  return new UnconfiguredCloudVaultRepository();
+  return new SupabaseCloudVaultRepository();
 }

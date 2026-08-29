@@ -26,8 +26,38 @@ export function locateBookmarkAnchors(doc: Document): BookmarkAnchorTarget[] {
   );
 }
 
+export type BookmarkSaveStatus = "idle" | "saving" | "saved" | "failed";
+
 export interface InjectBookmarkOptions {
-  onBookmark: (target: BookmarkAnchorTarget) => void;
+  onBookmark: (target: BookmarkAnchorTarget, control: BookmarkControlHandle) => void;
+}
+
+export interface BookmarkControlHandle {
+  setStatus(status: BookmarkSaveStatus, detail?: string): void;
+}
+
+function applyStatus(button: HTMLButtonElement, status: BookmarkSaveStatus, detail?: string): void {
+  switch (status) {
+    case "saving":
+      button.textContent = "Saving…";
+      button.disabled = true;
+      button.title = "Saving snapshot to Vault";
+      break;
+    case "saved":
+      button.textContent = "Saved";
+      button.disabled = false;
+      button.title = detail ?? "Saved to Vault";
+      break;
+    case "failed":
+      button.textContent = "Retry";
+      button.disabled = false;
+      button.title = detail ?? "Save failed";
+      break;
+    default:
+      button.textContent = "Vault";
+      button.disabled = false;
+      button.title = "Save conversation to Vault";
+  }
 }
 
 export function injectBookmarkControls(
@@ -45,15 +75,22 @@ export function injectBookmarkControls(
 
     const button = doc.createElement("button");
     button.type = "button";
-    button.textContent = "Vault";
     button.setAttribute("aria-label", "Save conversation to Vault");
     button.setAttribute(BOOKMARK_ATTR, "true");
     button.setAttribute(BOOKMARK_KEY_ATTR, target.key);
     button.style.marginInlineStart = "8px";
+    applyStatus(button, "idle");
+
+    const control: BookmarkControlHandle = {
+      setStatus(status, detail) {
+        applyStatus(button, status, detail);
+      },
+    };
+
     button.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
-      options.onBookmark(target);
+      options.onBookmark(target, control);
     });
 
     target.actionRow.append(button);
