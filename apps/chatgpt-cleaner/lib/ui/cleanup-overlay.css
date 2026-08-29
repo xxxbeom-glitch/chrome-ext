@@ -1,0 +1,250 @@
+:host {
+  all: initial;
+  font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.ce-overlay-root {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483646;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.ce-overlay-root[hidden] {
+  display: none !important;
+}
+
+.ce-overlay-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.48);
+}
+
+.ce-overlay-dialog {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+  gap: 12px;
+  width: min(720px, 100%);
+  max-height: min(80vh, 840px);
+  padding: 20px;
+  border: 1px solid #d7dee8;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.24);
+}
+
+.ce-overlay-dialog:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.ce-overlay-header,
+.ce-overlay-toolbar,
+.ce-overlay-footer,
+.ce-row,
+.ce-select-all {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.ce-overlay-header {
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.ce-overlay-header h1 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.3;
+  font-weight: 650;
+}
+
+.ce-overlay-subtitle,
+.ce-row__meta,
+.ce-selected-count,
+.ce-overlay-status {
+  margin: 0;
+  color: #475569;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.ce-overlay-status[data-tone="error"] {
+  color: #b91c1c;
+}
+
+.ce-overlay-toolbar {
+  flex-wrap: wrap;
+}
+
+.ce-search {
+  flex: 1 1 220px;
+}
+
+.ce-search input,
+.ce-button,
+.ce-icon-button {
+  font: inherit;
+}
+
+.ce-search input {
+  width: 100%;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: inherit;
+}
+
+.ce-search input:focus-visible,
+.ce-button:focus-visible,
+.ce-icon-button:focus-visible,
+.ce-row input:focus-visible,
+.ce-select-all input:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.ce-conversation-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  min-height: 200px;
+}
+
+.ce-row,
+.ce-empty {
+  padding: 12px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.ce-row:last-child,
+.ce-empty:last-child {
+  border-bottom: 0;
+}
+
+.ce-row__body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.ce-row__title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ce-row__error {
+  margin: 0;
+  color: #b91c1c;
+  font-size: 12px;
+}
+
+.ce-row__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.ce-overlay-footer {
+  justify-content: flex-end;
+}
+
+.ce-button,
+.ce-icon-button {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.ce-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ce-button--secondary {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.ce-button--danger {
+  background: #dc2626;
+  color: #fff;
+}
+
+.ce-button--compact {
+  min-height: 32px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.ce-icon-button {
+  width: 36px;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+}
+
+.ce-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .ce-overlay-dialog {
+    background: #0b1220;
+    color: #e2e8f0;
+    border-color: #334155;
+  }
+
+  .ce-overlay-subtitle,
+  .ce-row__meta,
+  .ce-selected-count,
+  .ce-overlay-status {
+    color: #94a3b8;
+  }
+
+  .ce-search input,
+  .ce-button--secondary {
+    background: #111827;
+    border-color: #475569;
+    color: #e2e8f0;
+  }
+
+  .ce-conversation-list,
+  .ce-row,
+  .ce-empty {
+    border-color: #334155;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
