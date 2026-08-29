@@ -16,6 +16,7 @@ Last updated: 2026-08-29
 | Issue | App / scope | State | Owner | Review mode | Branch |
 | --- | --- | --- | --- | --- | --- |
 | #6 | `apps/chatgpt-cleaner` / MVP implementation epic | READY | CURSOR | SELF | parent epic |
+| #13 | `apps/chatgpt-cleaner` / Phase 3 cleanup mutations | RUNNING | CURSOR | SELF | `feat/chatgpt-cleaner-p3-cleanup-mutations` |
 
 Concurrent active tasks are allowed only when their declared write scopes are disjoint. See `docs/COLLABORATION.md`.
 

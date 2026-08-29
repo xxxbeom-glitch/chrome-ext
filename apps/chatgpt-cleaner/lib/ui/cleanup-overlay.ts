@@ -8,8 +8,19 @@ import {
   selectAllLoadedLabel,
   selectedCount,
 } from "../domain/cleanup-ui";
+import {
+  createOperationId,
+  type CleanupCapabilities,
+  type CleanupMutator,
+  runCleanupOperation,
+} from "../domain/cleanup/engine";
 import type { CleanupListItem, DiscoveryCompleteness } from "../domain/types";
 import overlayCss from "./cleanup-overlay.css?inline";
+
+export interface CleanupOverlayOptions {
+  mutator: CleanupMutator;
+  capabilities: CleanupCapabilities;
+}
 
 export interface CleanupOverlayController {
   open: () => void;
@@ -20,6 +31,7 @@ export interface CleanupOverlayController {
     nextCompleteness: DiscoveryCompleteness,
     note?: string,
   ) => void;
+  setCapabilities: (next: CleanupCapabilities) => void;
 }
 
 function formatDate(value?: string): string {
@@ -34,7 +46,12 @@ function formatDate(value?: string): string {
   }
 }
 
-export function createCleanupOverlay(doc: Document): CleanupOverlayController {
+export function createCleanupOverlay(
+  doc: Document,
+  options: CleanupOverlayOptions,
+): CleanupOverlayController {
+  let capabilities = { ...options.capabilities };
+  const mutator = options.mutator;
   const host = doc.createElement("div");
   host.id = "ce-chatgpt-cleaner-host";
   host.setAttribute("data-ce-overlay-host", "true");
@@ -74,6 +91,13 @@ export function createCleanupOverlay(doc: Document): CleanupOverlayController {
         <button type="button" class="ce-button ce-button--secondary" data-action="bulk-archive" disabled>Archive selected</button>
         <button type="button" class="ce-button ce-button--danger" data-action="bulk-delete" disabled>Delete selected</button>
       </footer>
+      <div class="ce-confirm" data-role="confirm" hidden>
+        <p data-role="confirm-text"></p>
+        <div class="ce-confirm__actions">
+          <button type="button" class="ce-button ce-button--secondary" data-action="confirm-cancel">Cancel</button>
+          <button type="button" class="ce-button ce-button--danger" data-action="confirm-delete">Confirm delete</button>
+        </div>
+      </div>
     </div>
   `;
   shadow.append(root);
@@ -84,6 +108,8 @@ export function createCleanupOverlay(doc: Document): CleanupOverlayController {
   let items: CleanupListItem[] = MOCK_CLEANUP_ITEMS.map((item) => ({ ...item }));
   let completeness: DiscoveryCompleteness = MOCK_DISCOVERY_COMPLETENESS;
   let lastFocused: Element | null = null;
+  let pendingDeleteIds: string[] = [];
+  let running = false;
 
   const dialog = root.querySelector<HTMLElement>(".ce-overlay-dialog")!;
   const list = root.querySelector<HTMLElement>("[data-role='list']")!;
@@ -95,6 +121,8 @@ export function createCleanupOverlay(doc: Document): CleanupOverlayController {
   const statusEl = root.querySelector<HTMLElement>("[data-role='status']")!;
   const bulkArchive = root.querySelector<HTMLButtonElement>("[data-action='bulk-archive']")!;
   const bulkDelete = root.querySelector<HTMLButtonElement>("[data-action='bulk-delete']")!;
+  const confirmBox = root.querySelector<HTMLElement>("[data-role='confirm']")!;
+  const confirmText = root.querySelector<HTMLElement>("[data-role='confirm-text']")!;
 
   function visibleItems(): CleanupListItem[] {
     return filterCleanupItems(items, query);
@@ -103,6 +131,67 @@ export function createCleanupOverlay(doc: Document): CleanupOverlayController {
   function setStatus(message: string, tone: "info" | "error" = "info"): void {
     statusEl.textContent = message;
     statusEl.dataset.tone = tone;
+  }
+
+  function hideConfirm(): void {
+    pendingDeleteIds = [];
+    confirmBox.hidden = true;
+  }
+
+  function showDeleteConfirm(ids: string[]): void {
+    pendingDeleteIds = [...ids];
+    confirmText.textContent =
+      ids.length === 1
+        ? `Delete conversation ${ids[0]}? This cannot be undone from the extension.`
+        : `Delete exactly ${ids.length} conversations? This cannot be undone from the extension.`;
+    confirmBox.hidden = false;
+  }
+
+  async function runOperation(kind: "archive" | "delete", ids: string[]): Promise<void> {
+    if (running || ids.length === 0) return;
+    running = true;
+    const snapshotIds = [...ids];
+    for (const id of snapshotIds) {
+      const item = items.find((entry) => entry.sourceId === id);
+      if (item) {
+        item.status = "running";
+        item.errorMessage = undefined;
+      }
+    }
+    render();
+    setStatus(`${kind === "archive" ? "Archiving" : "Deleting"} ${snapshotIds.length} conversation(s)…`);
+
+    const results = await runCleanupOperation(
+      {
+        operationId: createOperationId(kind),
+        kind,
+        targets: snapshotIds.map((sourceId) => ({ sourceId })),
+        concurrency: 3,
+      },
+      capabilities,
+      mutator,
+    );
+
+    for (const result of results) {
+      const item = items.find((entry) => entry.sourceId === result.sourceId);
+      if (!item) continue;
+      item.status = result.status;
+      item.errorMessage = result.errorMessage;
+      if (result.status === "succeeded") {
+        item.selected = false;
+        if (kind === "archive") item.archived = true;
+      }
+    }
+
+    const failed = results.filter((result) => result.status === "failed").length;
+    setStatus(
+      failed > 0
+        ? `Completed with ${failed} failure(s). Failed rows stay visible for retry.`
+        : `${kind === "archive" ? "Archive" : "Delete"} finished for ${snapshotIds.length} item(s).`,
+      failed > 0 ? "error" : "info",
+    );
+    running = false;
+    render();
   }
 
   function render(): void {
@@ -170,14 +259,14 @@ export function createCleanupOverlay(doc: Document): CleanupOverlayController {
       archiveBtn.className = "ce-button ce-button--secondary ce-button--compact";
       archiveBtn.textContent = "Archive";
       archiveBtn.addEventListener("click", () => {
-        setStatus(`Archive affordance ready for ${item.sourceId} (Phase 1: no host mutation).`);
+        void runOperation("archive", [item.sourceId]);
       });
       const deleteBtn = doc.createElement("button");
       deleteBtn.type = "button";
       deleteBtn.className = "ce-button ce-button--danger ce-button--compact";
       deleteBtn.textContent = "Delete";
       deleteBtn.addEventListener("click", () => {
-        setStatus(`Delete affordance ready for ${item.sourceId} (Phase 1: no host mutation).`, "error");
+        showDeleteConfirm([item.sourceId]);
       });
       actions.append(archiveBtn, deleteBtn);
 
@@ -199,6 +288,10 @@ export function createCleanupOverlay(doc: Document): CleanupOverlayController {
     if (event.key === "Escape") {
       event.preventDefault();
       event.stopPropagation();
+      if (!confirmBox.hidden) {
+        hideConfirm();
+        return;
+      }
       controller.close();
       return;
     }
@@ -227,7 +320,11 @@ export function createCleanupOverlay(doc: Document): CleanupOverlayController {
       lastFocused = doc.activeElement;
       root.hidden = false;
       if (!statusEl.textContent) {
-        setStatus("Read-only discovery. Host mutations remain disabled until Phase 3.");
+        setStatus(
+          capabilities.canArchive || capabilities.canDelete
+            ? "Cleanup mutations enabled for compatible actions only."
+            : "Discovery ready. Archive/Delete stay fail-closed until ChatGPT mutation compatibility is proven.",
+        );
       }
       render();
       dialog.focus();
@@ -251,22 +348,37 @@ export function createCleanupOverlay(doc: Document): CleanupOverlayController {
       if (note) setStatus(note);
       if (open) render();
     },
+    setCapabilities(next) {
+      capabilities = { ...next };
+    },
   };
 
   root.addEventListener("click", (event) => {
     const target = event.target as HTMLElement | null;
     const action = target?.closest<HTMLElement>("[data-action]")?.dataset.action;
     if (action === "close" || action === "backdrop") {
+      if (!confirmBox.hidden) {
+        hideConfirm();
+        return;
+      }
       controller.close();
     }
     if (action === "bulk-archive") {
-      setStatus(`Bulk Archive affordance for ${selectedCount(visibleItems())} items (Phase 1: no host mutation).`);
+      const ids = visibleItems().filter((item) => item.selected).map((item) => item.sourceId);
+      void runOperation("archive", ids);
     }
     if (action === "bulk-delete") {
-      setStatus(
-        `Bulk Delete would require confirming exactly ${selectedCount(visibleItems())} items (Phase 1: no host mutation).`,
-        "error",
-      );
+      const ids = visibleItems().filter((item) => item.selected).map((item) => item.sourceId);
+      showDeleteConfirm(ids);
+    }
+    if (action === "confirm-cancel") {
+      hideConfirm();
+      setStatus("Delete cancelled. No conversations were mutated.");
+    }
+    if (action === "confirm-delete") {
+      const ids = [...pendingDeleteIds];
+      hideConfirm();
+      void runOperation("delete", ids);
     }
   });
 

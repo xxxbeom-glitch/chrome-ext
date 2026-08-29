@@ -5,6 +5,10 @@ export {
   injectBookmarkControls,
   locateBookmarkAnchors,
 } from "./bookmarks";
+export {
+  createFailClosedMutationAdapter,
+  createRecordingMutationAdapter,
+} from "./mutations";
 export type {
   ChatGptCapabilities,
   ConversationSnapshot,
