@@ -162,6 +162,8 @@ Never label a selection as `all conversations` unless the adapter has positively
 
 One source ChatGPT conversation maps to one current Vault snapshot per extension user.
 
+### V1 — text-first snapshot
+
 V1 snapshot content:
 - user messages;
 - assistant messages;
@@ -176,17 +178,35 @@ V1 snapshot content:
 - source URL;
 - saved/updated timestamps;
 - ordered message positions;
-- bookmark anchors.
+- bookmark anchors;
+- safe metadata/placeholders for visible media or files when detectable.
 
 Out of V1 snapshot scope:
 - uploaded file binaries;
 - generated image binaries;
+- generated downloadable file binaries;
 - voice/audio;
 - Canvas/artifact application state;
 - third-party tool interactive widgets;
 - exact pixel-perfect reproduction of ChatGPT UI.
 
-If excluded media is visible, preserve a safe textual placeholder/metadata when practical rather than pretending the binary was archived.
+If excluded media is visible, preserve a safe textual placeholder/metadata when practical rather than pretending the binary was archived. V1 `complete` means complete enough for the V1 text-first contract; it must not imply that media/file binaries were backed up.
+
+### V1.1 — generated media/file backup
+
+After the core MVP is stable, add binary backup for ChatGPT-generated outputs:
+- generated images;
+- generated downloadable files such as PDF, ZIP, DOCX, CSV, XLSX, PPTX, and similar outputs when the source is safely retrievable;
+- store durable copies in extension-owned cloud storage, with Supabase Storage as the default target;
+- keep file metadata in the Vault snapshot and/or a dedicated media record so the Vault remains readable if the original ChatGPT conversation is later deleted;
+- do not depend on expiring ChatGPT download URLs as the durable copy;
+- never claim media backup success until the binary has been persisted successfully.
+
+Media capture follows the same whole-conversation snapshot model as text: when a bookmark triggers a fresh snapshot, supported generated media/files visible in that conversation are eligible for backup. It is not limited only to files attached to the exact assistant response whose bookmark icon was clicked.
+
+### V2 — optional uploaded-source backup
+
+A later version may optionally back up user-uploaded source files. This must be opt-in and quota-aware because uploaded originals can be large, sensitive, or redundant with files the user already owns elsewhere.
 
 ## 7. Duplicate/update policy
 
@@ -194,6 +214,7 @@ If excluded media is visible, preserve a safe textual placeholder/metadata when 
 - Same message bookmarked again: do not create duplicate anchors by default.
 - Snapshot version history is out of V1.
 - A future versioning feature may be added without changing the source-conversation identity model.
+- When V1.1 media backup exists, repeated snapshots should reuse already-persisted identical media where practical instead of uploading duplicate binaries.
 
 ## 8. Auth and cloud default
 
@@ -224,7 +245,7 @@ If external credentials/project setup are unavailable during implementation, Cur
 - Mobile support.
 - automatic full-account Vault backup without user action.
 - automatic deletion after Vault save.
-- media/file binary backup.
+- media/file binary backup (planned for V1.1 as defined above).
 - snapshot version history.
 - AI summarization/tag generation.
 - sharing/public links.
@@ -236,7 +257,8 @@ If external credentials/project setup are unavailable during implementation, Cur
 
 The MVP is successful when the user can:
 1. open one cleanup modal and safely archive/delete multiple ChatGPT conversations;
-2. save a complete-enough V1 conversation snapshot from an inline response action;
-3. later delete the ChatGPT original while the Vault copy remains readable;
-4. sign in on another Chrome environment and recover the Vault data;
-5. use the system without silent destructive failures or false `saved`/`all loaded` claims.
+2. save a complete-enough V1 text-first conversation snapshot from an inline response action;
+3. see safe placeholders/metadata for unsupported media instead of a false claim that media was archived;
+4. later delete the ChatGPT original while the V1 Vault copy remains readable for supported text/structured content;
+5. sign in on another Chrome environment and recover the Vault data;
+6. use the system without silent destructive failures or false `saved`/`all loaded` claims.
