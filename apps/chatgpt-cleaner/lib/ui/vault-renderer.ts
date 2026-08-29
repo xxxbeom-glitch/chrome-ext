@@ -1,4 +1,5 @@
 import type { VaultConversationDetail, VaultMessageBlock } from "../domain/types";
+import { safeExternalHref } from "../security/safe-url";
 
 function appendText(parent: HTMLElement, text: string): void {
   parent.append(parent.ownerDocument.createTextNode(text));
@@ -35,11 +36,18 @@ export function renderVaultBlock(parent: HTMLElement, block: VaultMessageBlock):
       return;
     }
     case "link": {
+      const href = safeExternalHref(block.href);
+      if (!href) {
+        const fallback = doc.createElement("span");
+        appendText(fallback, block.label ?? "unsafe link omitted");
+        parent.append(fallback);
+        return;
+      }
       const anchor = doc.createElement("a");
-      anchor.href = block.href ?? "#";
+      anchor.href = href;
       anchor.rel = "noopener noreferrer";
       anchor.target = "_blank";
-      appendText(anchor, block.label ?? block.href ?? "link");
+      appendText(anchor, block.label ?? href);
       parent.append(anchor);
       return;
     }
@@ -71,9 +79,10 @@ export function renderVaultDetail(root: HTMLElement, detail: VaultConversationDe
   meta.textContent = `${detail.completeness} · ${detail.bookmarkCount} bookmarks · updated ${detail.updatedAt}`;
   header.append(title, meta);
 
-  if (detail.sourceUrl) {
+  const sourceHref = safeExternalHref(detail.sourceUrl);
+  if (sourceHref) {
     const source = doc.createElement("a");
-    source.href = detail.sourceUrl;
+    source.href = sourceHref;
     source.target = "_blank";
     source.rel = "noopener noreferrer";
     source.textContent = "Open source on ChatGPT";

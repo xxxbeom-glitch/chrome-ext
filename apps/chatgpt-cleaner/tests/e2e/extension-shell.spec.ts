@@ -63,6 +63,7 @@ test.describe("Phase 0/1 extension harness", () => {
     await expect(page.getByRole("button", { name: "Open ChatGPT" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Clean up conversations" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Bookmarked conversations" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Cloud setup required|Sign in with Google|Sign out/ })).toBeVisible();
   });
 
   test("vault shell renders local vault empty or reader chrome", async ({ context, extensionId }) => {

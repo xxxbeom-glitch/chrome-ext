@@ -18,20 +18,20 @@ Last updated: 2026-08-29
 | #6 | `apps/chatgpt-cleaner` / MVP implementation epic | READY | CURSOR | SELF | parent epic |
 | #15 | `apps/chatgpt-cleaner` / live Archive-Delete binding | BLOCKED | USER | USER | n/a |
 | #20 | `apps/chatgpt-cleaner` / Google Auth provider setup | BLOCKED | USER | USER | n/a |
-| #23 | `apps/chatgpt-cleaner` / Phase 6 cloud bookmark wiring | RUNNING | CURSOR | SELF | `feat/chatgpt-cleaner-p6-cloud-bookmark` |
+| #25 | `apps/chatgpt-cleaner` / Phase 7 hardening | RUNNING | CURSOR | SELF | `test/chatgpt-cleaner-p7-hardening` |
 
 Concurrent active tasks are allowed only when their declared write scopes are disjoint. See `docs/COLLABORATION.md`.
 
 ## Current repository baseline
 
-- Phases 0–5 engineering on `main`.
-- Remediation #21/#22 merged: CI Playwright Chromium install, PKCE auth contract, `WXT_PUBLIC_*` env naming. Main Actions GREEN (`33237285058`).
+- Phases 0–6 engineering on `main` (Phase 6 via #23/#24).
+- Auth: Supabase OAuth PKCE only. Env: `WXT_PUBLIC_SUPABASE_*`.
+- Residual / USER blockers: `apps/chatgpt-cleaner/docs/RESIDUAL.md`.
 
 ## Next planned product work
 
-1. Finish #23 Phase 6 (cloud when signed in, local fallback; no interactive Google smoke required).
-2. Continue Phase 7 hardening that does not need live ChatGPT or Google.
-3. Keep #15/#20 BLOCKED for real USER actions only.
+1. Finish #25 Phase 7 engineering hardening; leave #15/#20 BLOCKED.
+2. Do not close epic #6 until USER clears #15/#20 or explicitly accepts residual.
 
 ## Blockers / decisions needed
 
