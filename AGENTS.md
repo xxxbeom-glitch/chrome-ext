@@ -67,14 +67,16 @@ Store-policy compliance is a release gate even for extensions initially used onl
 ## 7. Implementation workflow
 
 For each meaningful change:
-1. identify the target app and its scope;
-2. read the app SPEC, permissions document, and QA document;
-3. inspect current architecture before changing it;
-4. implement the smallest coherent slice;
-5. add or update tests in the same change;
-6. run repository verification, static checks, unit tests, build, and relevant E2E;
-7. perform manual extension smoke QA when browser behavior changed;
-8. update documentation when permissions, data flow, UX contract, design tokens, or architecture changed.
+1. recover current state from `CURRENT.md` and the active GitHub Issue;
+2. identify the target app and its scope;
+3. read the app SPEC, permissions document, QA document, and app `AGENTS.md`;
+4. inspect current architecture before changing it;
+5. implement the smallest coherent slice;
+6. add or update tests in the same change;
+7. run repository verification, static checks, unit tests, build, and relevant E2E;
+8. perform manual extension smoke QA when browser behavior changed;
+9. update documentation when permissions, data flow, UX contract, design tokens, architecture, or durable decisions changed;
+10. hand off using the GitHub Issue protocol in `docs/COLLABORATION.md`.
 
 Do not silently broaden scope.
 
@@ -90,7 +92,9 @@ A change is not done until:
 - permissions are unchanged or documented;
 - no remote executable code was introduced;
 - manual smoke steps are complete when extension runtime behavior changed;
-- documentation reflects the implemented behavior.
+- documentation reflects the implemented behavior;
+- the task Issue contains explicit QA/result/risk/not-done evidence;
+- the task is reviewed according to the GitHub collaboration state machine.
 
 ## 9. Testing expectations
 
@@ -174,6 +178,23 @@ When using Cursor:
 
 Read `docs/CURSOR.md` for the expected Cursor workflow.
 
-## 16. Documentation hierarchy
+## 16. GitHub collaboration and handoff
 
-Repository rules in this file override app-local convenience. App-specific decisions belong under `apps/<slug>/docs/`. If an app intentionally deviates from a repository default, document the reason and trade-off in its SPEC.
+GitHub is the operational hub shared by ChatGPT and Cursor. Notion, chat history, editor memory, and local scratch notes are not task-state authorities for this repository.
+
+Mandatory rules:
+- Read `CURRENT.md` first when resuming or starting meaningful work.
+- Read the active GitHub Issue and its latest state-transition comments.
+- Follow `docs/COLLABORATION.md` for task states, ownership, claim, completion, review, and fix loops.
+- A task has exactly one current owner: `CHATGPT`, `CURSOR`, or `USER`.
+- Cursor must run `pnpm agent:check` before changing GitHub task state.
+- Cursor normally hands completed implementation to `STATE: REVIEW / OWNER: CHATGPT`; it does not self-approve unless review authority was explicitly delegated.
+- ChatGPT owns normal planning/review and normally maintains `CURRENT.md` on main.
+- Product/UX/policy/permission/privacy ambiguity must not be guessed; use `DECISION_NEEDED`.
+- Accepted durable decisions belong in `docs/decisions/`.
+- PRs/commits and CI are implementation evidence; Issue comments are handoff evidence.
+- The repository is public, so never put private conversation contents, session/account data, credentials, personal exports, or other private operational material into Issues/PRs/commits.
+
+## 17. Documentation hierarchy
+
+Repository rules in this file override app-local convenience. App-specific decisions belong under `apps/<slug>/docs/`. Durable repository/app decisions that affect future work belong in `docs/decisions/`. If an app intentionally deviates from a repository default, document the reason and trade-off in its SPEC.
