@@ -1,11 +1,8 @@
 import { applyTheme } from "@chrome-ext/design-system/theme";
 import { renderVaultDetail } from "../../lib/ui/vault-renderer";
 import { loadThemeMode } from "../../lib/storage/theme";
-import {
-  loadLocalVault,
-  persistLocalVault,
-  type VaultRecord,
-} from "../../lib/domain/vault/local-repository";
+import { vaultService } from "../../lib/domain/vault/service";
+import type { VaultRecord } from "../../lib/domain/vault/local-repository";
 import type { VaultConversationDetail } from "../../lib/domain/types";
 
 function toDetail(record: VaultRecord): VaultConversationDetail {
@@ -54,7 +51,6 @@ async function init(): Promise<void> {
   const theme = await loadThemeMode();
   applyTheme(theme);
 
-  const repo = await loadLocalVault();
   app.replaceChildren();
   app.className = "ce-vault";
 
@@ -63,8 +59,6 @@ async function init(): Promise<void> {
 
   const subtitle = document.createElement("p");
   subtitle.className = "ce-vault__subtitle";
-  subtitle.textContent =
-    "Local development Vault. Cloud sync arrives later. Deleting here never deletes ChatGPT source conversations.";
 
   const layout = document.createElement("div");
   layout.className = "ce-vault__layout";
@@ -77,8 +71,10 @@ async function init(): Promise<void> {
   reader.className = "ce-vault__reader";
   reader.setAttribute("aria-live", "polite");
 
-  function showDetail(id: string): void {
-    const record = repo.get(id);
+  let records: VaultRecord[] = [];
+
+  async function showDetail(id: string): Promise<void> {
+    const record = records.find((item) => item.id === id);
     reader.replaceChildren();
     if (!record) {
       const empty = document.createElement("p");
@@ -98,19 +94,29 @@ async function init(): Promise<void> {
         `Delete Vault copy "${record.title}"? This does not delete the ChatGPT source.`,
       );
       if (!confirmed) return;
-      repo.deleteVaultOnly(record.id);
-      void persistLocalVault(repo).then(renderList);
+      void vaultService.deleteVaultOnly(record.id).then((deleted) => {
+        if (deleted) void renderList();
+      });
     });
     reader.append(deleteBtn);
   }
 
-  function renderList(): void {
+  async function renderList(): Promise<void> {
+    const backend = await vaultService.backend();
+    subtitle.textContent =
+      backend === "cloud"
+        ? "Cloud Vault (signed in). Deleting here never deletes ChatGPT source conversations."
+        : "Local development Vault. Sign in from the popup to sync to cloud. Deleting here never deletes ChatGPT source conversations.";
+
     list.replaceChildren();
-    const records = repo.list();
+    records = await vaultService.list();
     if (records.length === 0) {
       const empty = document.createElement("li");
       empty.className = "ce-empty";
-      empty.textContent = "No local Vault snapshots yet. Use the ChatGPT bookmark control to capture one.";
+      empty.textContent =
+        backend === "cloud"
+          ? "No cloud Vault snapshots yet. Use the ChatGPT bookmark control to capture one."
+          : "No local Vault snapshots yet. Use the ChatGPT bookmark control to capture one.";
       list.append(empty);
       reader.replaceChildren();
       const hint = document.createElement("p");
@@ -129,17 +135,17 @@ async function init(): Promise<void> {
       const meta = document.createElement("span");
       meta.textContent = `${record.completeness} · ${record.bookmarks.length} bookmarks`;
       button.append(itemTitle, meta);
-      button.addEventListener("click", () => showDetail(record.id));
+      button.addEventListener("click", () => void showDetail(record.id));
       item.append(button);
       list.append(item);
     }
 
-    showDetail(records[0]!.id);
+    await showDetail(records[0]!.id);
   }
 
   layout.append(list, reader);
   app.append(title, subtitle, layout);
-  renderList();
+  await renderList();
 }
 
 void init();

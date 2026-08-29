@@ -5,10 +5,7 @@ import {
   probeCompatibility,
 } from "../lib/adapters/chatgpt";
 import { createFailClosedMutationAdapter } from "../lib/adapters/chatgpt/mutations";
-import {
-  loadLocalVault,
-  persistLocalVault,
-} from "../lib/domain/vault/local-repository";
+import { vaultService } from "../lib/domain/vault/service";
 import { isExtensionMessage, MESSAGE_VERSION } from "../lib/messaging/schema";
 import { markContentScriptLoaded } from "../lib/runtime/content-marker";
 import { createCleanupOverlay } from "../lib/ui/cleanup-overlay";
@@ -62,12 +59,15 @@ export default defineContentScript({
       if (!probe.capabilities.canLocateAssistantActions) return;
 
       injectBookmarkControls(document, {
-        onBookmark: (target) => {
+        onBookmark: (target, control) => {
           void (async () => {
+            control.setStatus("saving");
             const captureProbe = probeCompatibility(document);
-            if (!captureProbe.capabilities.canCaptureConversation) return;
+            if (!captureProbe.capabilities.canCaptureConversation) {
+              control.setStatus("failed", "Conversation capture unavailable");
+              return;
+            }
             const snapshot = captureCurrentConversation(document);
-            const repo = await loadLocalVault();
             const ordinal =
               snapshot.messages.find((message) =>
                 target.sourceMessageId
@@ -82,17 +82,30 @@ export default defineContentScript({
                 ?.blocks.map((block) => ("text" in block ? block.text : ""))
                 .join(" ")
                 .slice(0, 120) || target.key;
-            const result = repo.saveSnapshot({
-              snapshot,
-              anchor: {
-                ...(target.sourceMessageId ? { sourceMessageId: target.sourceMessageId } : {}),
-                messageOrdinal: ordinal,
-                excerpt,
-                anchorKey: target.key,
-              },
-            });
-            if (result.ok) {
-              await persistLocalVault(repo);
+
+            try {
+              const result = await vaultService.saveSnapshot({
+                snapshot,
+                anchor: {
+                  ...(target.sourceMessageId ? { sourceMessageId: target.sourceMessageId } : {}),
+                  messageOrdinal: ordinal,
+                  excerpt,
+                  anchorKey: target.key,
+                },
+              });
+              if (!result.ok) {
+                control.setStatus("failed", result.error);
+                return;
+              }
+              control.setStatus(
+                "saved",
+                result.backend === "cloud" ? "Saved to cloud Vault" : "Saved to local Vault",
+              );
+            } catch (error) {
+              control.setStatus(
+                "failed",
+                error instanceof Error ? error.message : "Save failed",
+              );
             }
           })();
         },

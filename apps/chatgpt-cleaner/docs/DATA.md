@@ -99,7 +99,17 @@ V1 block vocabulary must cover:
 
 Do not store executable host markup/scripts.
 
-## 5. Re-save transaction
+## 5. Runtime routing (Phase 6+)
+
+Canonical write path is `lib/domain/vault/service.ts`:
+
+- **signed in + configured** → `SupabaseCloudVaultRepository` (cloud upsert; success only after persistence confirmation);
+- **unsigned / unconfigured** → `LocalVaultRepository` via `chrome.storage.local` (local fallback; same partial-overwrite protection);
+- cloud network/auth failure returns failure (never success) and must not claim a cloud save.
+
+Sign-out clears the Supabase Auth session (PKCE tokens in extension storage). Local offline snapshots are not wiped on sign-out.
+
+## 6. Re-save transaction
 
 When bookmarking a response in an already-saved source conversation:
 
@@ -117,7 +127,7 @@ If capture is partial:
 
 Where practical, snapshot upsert + bookmark insertion should be executed through a transaction/RPC or otherwise designed so a failure cannot silently create misleading mixed state.
 
-## 6. RLS contract
+## 7. RLS contract
 
 Enable RLS on every user-data table.
 
@@ -129,7 +139,7 @@ Required policy semantics for `vault_conversations` and `bookmarks`:
 
 Cursor must create version-controlled migration SQL under the app (for example `supabase/migrations/`) rather than relying only on dashboard clicks.
 
-## 7. Auth flow
+## 8. Auth flow
 
 Target flow:
 
@@ -153,7 +163,7 @@ If the external project is not configured yet, implementation should still provi
 
 Then stop only the real-cloud E2E gate with an explicit blocker requiring the user's setup.
 
-## 8. Environment values
+## 9. Environment values
 
 Canonical client configuration names (WXT public env only):
 
@@ -176,7 +186,7 @@ Never commit:
 - ChatGPT session token/cookie;
 - private user exports.
 
-## 9. Deletion semantics
+## 10. Deletion semantics
 
 ### Deleting ChatGPT original
 - does not alter Vault data.
@@ -188,7 +198,7 @@ Never commit:
 
 The UI must make these two deletion domains visually/textually distinct.
 
-## 10. Sync/cache semantics
+## 11. Sync/cache semantics
 
 Cloud is source of truth for Vault data.
 
@@ -204,7 +214,7 @@ Rules:
 - a cache failure must not delete cloud data;
 - never use `chrome.storage.sync` for full snapshot bodies.
 
-## 11. Future-compatible fields
+## 12. Future-compatible fields
 
 Do not implement unless required, but preserve schema room for:
 - tags;
