@@ -117,7 +117,7 @@ export function captureCurrentConversation(doc: Document): ConversationSnapshot 
   const sourceConversationId = currentConversationId(doc);
   const title =
     (doc.querySelector("title")?.textContent ?? "").replace(/\s*[-|].*$/, "").trim() ||
-    "Untitled conversation";
+    "제목 없는 대화";
 
   const completeness =
     sourceConversationId !== "unknown" && messages.length > 0 ? "complete" : "partial";

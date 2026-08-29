@@ -30,7 +30,7 @@ export const MOCK_CLEANUP_ITEMS: CleanupListItem[] = [
     archived: true,
     selected: false,
     status: "failed",
-    errorMessage: "Mock failure for UI state only",
+    errorMessage: "UI 상태용 모의 실패",
   },
   {
     sourceId: "c-1004",

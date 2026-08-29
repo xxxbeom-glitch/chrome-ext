@@ -136,7 +136,7 @@ export class SupabaseCloudVaultRepository {
     if (!client || session.status !== "signed_in") {
       return {
         ok: false,
-        error: "Supabase is not configured or the user is signed out",
+        error: "Supabase가 설정되지 않았거나 로그아웃 상태입니다",
         preservedExisting: true,
       };
     }
@@ -156,7 +156,7 @@ export class SupabaseCloudVaultRepository {
     if (shouldRejectPartialOverwrite(existingRow?.completeness, snapshot.completeness)) {
       return {
         ok: false,
-        error: "Refusing to overwrite a complete Vault snapshot with a partial capture",
+        error: "완료된 보관함 스냅샷을 부분 캡처로 덮어쓰지 않습니다",
         preservedExisting: true,
       };
     }
@@ -183,7 +183,7 @@ export class SupabaseCloudVaultRepository {
     if (upsertError || !upserted) {
       return {
         ok: false,
-        error: upsertError?.message ?? "Vault upsert failed",
+        error: upsertError?.message ?? "보관함 저장에 실패했습니다",
         preservedExisting: true,
       };
     }

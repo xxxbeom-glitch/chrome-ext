@@ -23,16 +23,15 @@ Concurrent active tasks are allowed only when their declared write scopes are di
 
 ## Current repository baseline
 
-- Phases 0–7 engineering complete on `main` (Phase 7 via #25/#26).
+- Phases 0–7 engineering complete on `main`.
+- User-facing UI copy: Korean (no i18n framework).
 - Auth: Supabase OAuth PKCE only. Env: `WXT_PUBLIC_SUPABASE_*`.
 - Residual / USER blockers: `apps/chatgpt-cleaner/docs/RESIDUAL.md`.
-- Epic #6 stays open until #15/#20 clear or user accepts residual.
 
 ## Next planned product work
 
-1. USER: complete #20 Google Web OAuth + Supabase redirect allowlist, then Cursor verifies sign-in + cross-profile restore.
-2. USER: complete #15 disposable ChatGPT Archive/Delete notes, then Cursor binds live mutators fail-open only when proven.
-3. After both, close epic #6.
+1. USER: #20 Google OAuth setup; #15 live Archive/Delete.
+2. After both, close epic #6.
 
 ## Blockers / decisions needed
 

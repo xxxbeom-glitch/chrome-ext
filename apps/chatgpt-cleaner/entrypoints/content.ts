@@ -34,7 +34,7 @@ export default defineContentScript({
         overlay.setDiscovery(
           [],
           "unknown",
-          `ChatGPT changed or sidebar unavailable (${probe.reasons.join("; ") || "incompatible"}). Destructive actions stay disabled.`,
+          `ChatGPT가 바뀌었거나 사이드바를 쓸 수 없습니다 (${probe.reasons.join("; ") || "호환되지 않음"}). 위험 작업은 비활성화됩니다.`,
         );
         return;
       }
@@ -50,7 +50,7 @@ export default defineContentScript({
       overlay.setDiscovery(
         items,
         page.completeness,
-        "Live DOM discovery. Archive/Delete remain fail-closed until mutation compatibility is positively proven.",
+        "실시간 DOM 목록입니다. ChatGPT 호환성이 확인될 때까지 보관/삭제는 실행되지 않습니다.",
       );
     };
 
@@ -64,7 +64,7 @@ export default defineContentScript({
             control.setStatus("saving");
             const captureProbe = probeCompatibility(document);
             if (!captureProbe.capabilities.canCaptureConversation) {
-              control.setStatus("failed", "Conversation capture unavailable");
+              control.setStatus("failed", "대화 캡처를 사용할 수 없습니다");
               return;
             }
             const snapshot = captureCurrentConversation(document);
@@ -99,12 +99,12 @@ export default defineContentScript({
               }
               control.setStatus(
                 "saved",
-                result.backend === "cloud" ? "Saved to cloud Vault" : "Saved to local Vault",
+                result.backend === "cloud" ? "클라우드 보관함에 저장됨" : "로컬 보관함에 저장됨",
               );
             } catch (error) {
               control.setStatus(
                 "failed",
-                error instanceof Error ? error.message : "Save failed",
+                error instanceof Error ? error.message : "저장 실패",
               );
             }
           })();

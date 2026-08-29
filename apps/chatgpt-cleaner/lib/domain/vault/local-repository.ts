@@ -78,7 +78,7 @@ export class LocalVaultRepository {
     if (snapshot.completeness === "partial" && existing?.completeness === "complete") {
       return {
         ok: false,
-        error: "Refusing to overwrite a complete Vault snapshot with a partial capture",
+        error: "완료된 보관함 스냅샷을 부분 캡처로 덮어쓰지 않습니다",
         preservedExisting: true,
       };
     }

@@ -59,19 +59,21 @@ test.describe("Phase 0/1 extension harness", () => {
   test("popup shell renders launcher actions", async ({ context, extensionId }) => {
     const page = await context.newPage();
     await page.goto(`chrome-extension://${extensionId}/popup.html`);
-    await expect(page.getByRole("heading", { name: "ChatGPT Cleaner" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Open ChatGPT" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Clean up conversations" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Bookmarked conversations" })).toBeVisible();
-    await expect(page.getByRole("button", { name: /Cloud setup required|Sign in with Google|Sign out/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "ChatGPT 대화 정리" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "ChatGPT 열기" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "대화방 정리하기" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "북마크한 대화" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /클라우드 설정 필요|Google로 로그인|로그아웃/ })).toBeVisible();
   });
 
   test("vault shell renders local vault empty or reader chrome", async ({ context, extensionId }) => {
     const page = await context.newPage();
     await page.goto(`chrome-extension://${extensionId}/vault.html`);
-    await expect(page.getByRole("heading", { name: "Conversation Vault" })).toBeVisible();
-    await expect(page.getByText("Local development Vault.", { exact: false })).toBeVisible();
-    await expect(page.getByText("No local Vault snapshots yet", { exact: false })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "대화 보관함" })).toBeVisible();
+    await expect(
+      page.getByText("팝업에서 로그인하면 클라우드와 동기화됩니다", { exact: false }),
+    ).toBeVisible();
+    await expect(page.getByText("로컬 보관함에 저장된 대화가 없습니다", { exact: false })).toBeVisible();
   });
 
   test("content script loads only on chatgpt.com and mounts isolated overlay host", async ({

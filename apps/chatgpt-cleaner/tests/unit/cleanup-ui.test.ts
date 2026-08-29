@@ -20,9 +20,9 @@ describe("cleanup UI helpers", () => {
   });
 
   it("distinguishes discovery completeness wording", () => {
-    expect(discoverySummary(4, "hasMore")).toContain("more available");
-    expect(discoverySummary(4, "endConfirmed")).toContain("end of list confirmed");
-    expect(selectAllLoadedLabel("hasMore")).toBe("Select all loaded conversations");
-    expect(selectAllLoadedLabel("endConfirmed")).toBe("Select all conversations");
+    expect(discoverySummary(4, "hasMore")).toContain("더 있을 수 있음");
+    expect(discoverySummary(4, "endConfirmed")).toContain("목록 끝 확인됨");
+    expect(selectAllLoadedLabel("hasMore")).toBe("불러온 대화 전체 선택");
+    expect(selectAllLoadedLabel("endConfirmed")).toBe("전체 선택");
   });
 });

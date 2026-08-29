@@ -42,6 +42,6 @@ describe("PKCE auth helpers", () => {
     }));
     const { startGoogleSignIn } = await import("../../lib/supabase/auth");
     const result = await startGoogleSignIn();
-    expect(result).toEqual({ ok: false, error: "Supabase public config is missing" });
+    expect(result).toEqual({ ok: false, error: "Supabase 공개 설정이 없습니다" });
   });
 });
