@@ -63,7 +63,7 @@ test.describe("extension harness", () => {
     await expect(page.getByRole("heading", { name: "ChatGPT 대화 정리" })).toBeVisible();
     await expect(page.getByRole("button", { name: "ChatGPT 열기" })).toBeVisible();
     await expect(page.getByRole("button", { name: "대화방 정리하기" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "북마크한 대화" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "북마크 보관함" })).toBeVisible();
     await expect(page.getByRole("button", { name: /클라우드 설정 필요|Google로 로그인|로그아웃/ })).toBeVisible();
   });
 
