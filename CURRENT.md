@@ -18,7 +18,6 @@ Last updated: 2026-08-29
 | #6 | `apps/chatgpt-cleaner` / MVP implementation epic | READY | CURSOR | SELF | parent epic |
 | #15 | `apps/chatgpt-cleaner` / live Archive-Delete binding | BLOCKED | USER | USER | n/a |
 | #20 | `apps/chatgpt-cleaner` / Google Auth provider setup | BLOCKED | USER | USER | n/a |
-| #29 | `apps/chatgpt-cleaner` / cleanup overlay open recovery | RUNNING | CURSOR | SELF | `fix/cleanup-overlay-open-recovery` |
 
 Concurrent active tasks are allowed only when their declared write scopes are disjoint. See `docs/COLLABORATION.md`.
 
@@ -26,13 +25,14 @@ Concurrent active tasks are allowed only when their declared write scopes are di
 
 - Phases 0–7 engineering complete on `main`.
 - User-facing UI copy: Korean (no i18n framework).
+- Cleanup open recovers missing content scripts via tab reload + readiness poll (#29/#30).
 - Auth: Supabase OAuth PKCE only. Env: `WXT_PUBLIC_SUPABASE_*`.
 - Residual / USER blockers: `apps/chatgpt-cleaner/docs/RESIDUAL.md`.
 
 ## Next planned product work
 
-1. Land #29 cleanup overlay open recovery.
-2. USER: #20 Google OAuth setup; #15 live Archive/Delete.
+1. USER: #20 Google OAuth setup; #15 live Archive/Delete.
+2. After both, close epic #6.
 
 ## Blockers / decisions needed
 
