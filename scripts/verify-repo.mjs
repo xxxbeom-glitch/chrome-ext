@@ -31,6 +31,7 @@ const requiredRootFiles = [
   "docs/GITHUB_AGENT_SETUP.md",
   "docs/decisions/README.md",
   "docs/decisions/DEC-0001-github-collaboration-hub.md",
+  "docs/decisions/DEC-0002-cursor-standalone-review-mode.md",
   "scripts/check-agent-env.mjs",
   "templates/APP_AGENTS.md",
   "packages/design-system/package.json",
@@ -73,7 +74,7 @@ if (existsSync(currentPath)) {
   const current = readFileSync(currentPath, "utf8");
   for (const marker of [
     "## Active work",
-    "| Issue | App / scope | State | Owner | Branch |",
+    "| Issue | App / scope | State | Owner | Review mode | Branch |",
     "## Blockers / decisions needed",
     "## Recovery rule",
   ]) {
@@ -105,12 +106,25 @@ if (existsSync(collaborationPath)) {
     "STATE: RUNNING",
     "OWNER: CURSOR",
     "STATE: REVIEW",
-    "OWNER: CHATGPT",
+    "REVIEW_MODE: SELF",
+    "REVIEW_MODE: CHATGPT",
+    "REVIEW_MODE: USER",
+    "Cursor SELF-review protocol",
     "latest valid `STATE:` + `OWNER:` pair",
     "write scopes are disjoint",
   ]) {
     if (!collaboration.includes(marker)) {
-      errors.push(`Collaboration contract is missing handoff/concurrency marker: ${marker}`);
+      errors.push(`Collaboration contract is missing review/handoff/concurrency marker: ${marker}`);
+    }
+  }
+}
+
+const cursorCollaborationRulePath = join(root, ".cursor", "rules", "05-github-collaboration.mdc");
+if (existsSync(cursorCollaborationRulePath)) {
+  const rule = readFileSync(cursorCollaborationRulePath, "utf8");
+  for (const marker of ["REVIEW_MODE: SELF", "distinct second review pass", "STATE: DONE", "DECISION_NEEDED"]) {
+    if (!rule.includes(marker)) {
+      errors.push(`Cursor collaboration rule is missing standalone-review marker: ${marker}`);
     }
   }
 }
@@ -126,9 +140,14 @@ if (existsSync(packagePath)) {
 const taskFormPath = join(root, ".github", "ISSUE_TEMPLATE", "task.yml");
 if (existsSync(taskFormPath)) {
   const form = readFileSync(taskFormPath, "utf8");
-  for (const field of ["App / Scope", "Acceptance Criteria", "Do Not Change", "Required QA", "Initial Owner", "Initial State"]) {
+  for (const field of ["App / Scope", "Acceptance Criteria", "Do Not Change", "Required QA", "Review Mode", "Initial Owner", "Initial State"]) {
     if (!form.includes(field)) {
       errors.push(`Task issue form is missing required field: ${field}`);
+    }
+  }
+  for (const mode of ["SELF", "CHATGPT", "USER"]) {
+    if (!form.includes(`- ${mode}`)) {
+      errors.push(`Task issue form is missing review mode option: ${mode}`);
     }
   }
 }
