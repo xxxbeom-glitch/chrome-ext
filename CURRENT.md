@@ -16,29 +16,35 @@ Last updated: 2026-08-29
 | Issue | App / scope | State | Owner | Review mode | Branch |
 | --- | --- | --- | --- | --- | --- |
 | #6 | `apps/chatgpt-cleaner` / MVP implementation epic | READY | CURSOR | SELF | parent epic |
-| #15 | `apps/chatgpt-cleaner` / live Archive-Delete binding | BLOCKED | USER | USER | n/a |
-| #20 | `apps/chatgpt-cleaner` / Google Auth provider setup | BLOCKED | USER | USER | n/a |
+| #15 | `apps/chatgpt-cleaner` / live Archive-Delete binding | RUNNING | CHATGPT | USER | `feat/message-vault-and-live-mutations` |
+| #36 | `apps/chatgpt-cleaner` / independent message bookmarks | RUNNING | CHATGPT | SELF | `feat/message-vault-and-live-mutations` |
+| #20 | `apps/chatgpt-cleaner` / Google Auth live verification | BLOCKED | USER | USER | n/a |
+| #32 | `apps/chatgpt-cleaner` / V1.1 generated media backup | BLOCKED | CURSOR | SELF | future |
 
 Concurrent active tasks are allowed only when their declared write scopes are disjoint. See `docs/COLLABORATION.md`.
 
 ## Current repository baseline
 
-- Phases 0–7 engineering complete on `main`.
-- User-facing UI copy: Korean (no i18n framework).
-- Cleanup overlay discovers account history via same-origin ChatGPT list API (#31/#33); sidebar scrape is fallback only.
-- Auth: Supabase OAuth PKCE only. Env: `WXT_PUBLIC_SUPABASE_*`.
-- Residual / USER blockers: `apps/chatgpt-cleaner/docs/RESIDUAL.md`.
+- Account history discovery uses same-origin ChatGPT private-web pagination (#31/#33); sidebar scraping is fallback only.
+- User confirmed real signed-in discovery returns 170 conversations.
+- Bookmark action-row compatibility uses current turn-copy clusters (#34/#35).
+- Product contract is being changed from whole-conversation Vault snapshots to independent saved question/answer items (#36).
+- Live Archive/Delete private-web binding is being implemented under #15; destructive real-account smoke remains USER-only.
+- Auth remains Supabase OAuth PKCE only. Env: `WXT_PUBLIC_SUPABASE_*`.
 
-## Next planned product work
+## Next verification
 
-1. USER: signed-in discovery smoke (sidebar collapsed + home).
-2. USER: #20 Google OAuth setup; #15 live Archive/Delete.
+1. Automated: typecheck/unit/build/E2E/CI for #15 + #36.
+2. Supabase: apply `vault_items` migration with RLS; legacy Vault tables remain for rollback.
+3. USER: rebuild/reload extension and verify one assistant answer and one user question save independently.
+4. USER: use disposable ChatGPT conversations to smoke one Archive and one Delete.
+5. USER: finish/verify Google OAuth + second-profile cloud restore gate (#20).
 
-## Blockers / decisions needed
+## Safety / blockers
 
-- **#15 BLOCKED (USER):** live ChatGPT Archive/Delete binding.
-- **#20 BLOCKED (USER):** Google Web OAuth client + Supabase redirect allowlist per `docs/SUPABASE_SETUP.md` (PKCE contract).
-- Repository is public; keep Issues/PRs public-safe.
+- **#15:** implementation may proceed, but actual Delete verification must use an intentionally disposable conversation and explicit user confirmation.
+- **#20:** real OAuth/session/second-profile restore still requires USER environment.
+- Repository is public; keep Issues/PRs public-safe and never commit private chat data, screenshots, tokens, cookies, exports, or secrets.
 
 ## Recovery rule
 
