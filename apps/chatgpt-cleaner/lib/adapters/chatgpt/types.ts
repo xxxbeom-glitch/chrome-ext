@@ -43,6 +43,7 @@ export interface SnapshotMessage {
   blocks: SnapshotBlock[];
 }
 
+/** Legacy whole-conversation shape kept only for migration/fixture compatibility. */
 export interface ConversationSnapshot {
   sourceConversationId: string;
   sourceUrl: string;
@@ -52,8 +53,24 @@ export interface ConversationSnapshot {
   messages: SnapshotMessage[];
 }
 
+/** Canonical V1 Vault unit: one independently saved ChatGPT message. */
+export interface MessageSnapshot {
+  sourceConversationId: string;
+  sourceUrl: string;
+  sourceConversationTitle: string;
+  sourceMessageId?: string;
+  /** Stable dedupe key even when ChatGPT does not expose a message id. */
+  sourceMessageKey: string;
+  role: SnapshotMessage["role"];
+  messageOrdinal: number;
+  capturedAt: string;
+  blocks: SnapshotBlock[];
+}
+
 export interface BookmarkAnchorTarget {
   key: string;
   sourceMessageId?: string;
   actionRow: Element;
+  messageElement: Element;
+  role: SnapshotMessage["role"];
 }
