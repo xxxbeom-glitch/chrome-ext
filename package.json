@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "packageManager": "pnpm@10.15.0",
   "scripts": {
+    "agent:check": "node scripts/check-agent-env.mjs",
     "verify:repo": "node scripts/verify-repo.mjs",
     "lint": "pnpm -r --if-present lint",
     "typecheck:foundation": "tsc -p packages/design-system/tsconfig.json --noEmit",
