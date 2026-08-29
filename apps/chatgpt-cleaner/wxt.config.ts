@@ -9,7 +9,10 @@ export default defineConfig({
     description:
       "Clean up ChatGPT conversations and preserve selected conversations as independent Vault snapshots.",
     version: "0.0.0",
-    permissions: ["storage"],
-    host_permissions: ["https://chatgpt.com/*"],
+    permissions: ["storage", "identity"],
+    host_permissions: [
+      "https://chatgpt.com/*",
+      "https://sgdoskwhwenyugkljzyk.supabase.co/*",
+    ],
   },
 });

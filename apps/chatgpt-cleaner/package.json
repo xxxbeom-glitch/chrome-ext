@@ -15,7 +15,8 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@chrome-ext/design-system": "workspace:*"
+    "@chrome-ext/design-system": "workspace:*",
+    "@supabase/supabase-js": "2.57.4"
   },
   "devDependencies": {
     "@playwright/test": "1.55.0",

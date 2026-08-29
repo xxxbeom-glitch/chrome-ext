@@ -4,10 +4,10 @@
 
 | Permission / host | User-visible feature | Why narrower access is insufficient | Optional? |
 |---|---|---|---|
-| `storage` | persist theme/settings, safe operation recovery metadata, client cache | extension state must survive popup/service-worker lifecycle | No |
-| `identity` | Google OAuth redirect flow for Supabase Auth | browser-safe OAuth callback handling is required for cross-device Vault sign-in | No if chosen auth implementation uses `chrome.identity`; otherwise remove it |
+| `storage` | persist theme/settings, safe operation recovery metadata, client cache, local Vault | extension state must survive popup/service-worker lifecycle | No |
+| `identity` | Google OAuth redirect flow for Supabase Auth via `chrome.identity.launchWebAuthFlow` | browser-safe OAuth callback handling is required for cross-device Vault sign-in | No (chosen auth implementation) |
 | `https://chatgpt.com/*` | inject cleanup modal/bookmark action; discover/capture/mutate ChatGPT conversations | the product must operate continuously on ChatGPT, not only after one toolbar click | No |
-| configured `https://<project-ref>.supabase.co/*` | save/read synced Vault snapshots | cloud sync requires cross-origin API access from extension context | No after cloud sync is enabled |
+| `https://sgdoskwhwenyugkljzyk.supabase.co/*` | save/read synced Vault snapshots and Auth API | cloud sync requires cross-origin API access from extension context; exact project host only | No after cloud sync enabled |
 
 ## Explicitly not requested by default
 
@@ -17,6 +17,7 @@
 - `webRequest` / `webRequestBlocking` — not part of the product contract.
 - `cookies` — forbidden for convenience; ChatGPT cookies/session material must not be read or stored as a general extension capability.
 - `history`, `downloads`, `clipboardRead`, `clipboardWrite` — no V1 requirement.
+- `*.supabase.co` wildcard — forbidden; only the configured project host is allowlisted.
 
 ## ChatGPT host-access constraints
 
@@ -32,7 +33,7 @@ If an undocumented ChatGPT private-web endpoint is required, use the existing `c
 
 ## Supabase constraints
 
-- only the configured project host may be allowlisted;
+- only the configured project host may be allowlisted (`https://sgdoskwhwenyugkljzyk.supabase.co/*`);
 - never allowlist `*.supabase.co` unless a concrete technical requirement is proven and documented;
 - no service-role key in the client;
 - cloud writes require authenticated user context and RLS.
