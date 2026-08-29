@@ -8,11 +8,26 @@
 
 ## Automated gates
 
+- [ ] repository verifier (`pnpm verify:repo`)
 - [ ] lint
 - [ ] typecheck
 - [ ] unit tests
 - [ ] production build
 - [ ] extension E2E
+
+## Visual and theme QA
+
+- [ ] Pretendard renders from the bundled local package
+- [ ] light theme reviewed
+- [ ] dark theme reviewed
+- [ ] system theme follows OS preference
+- [ ] explicit light/dark override beats OS preference
+- [ ] semantic/component tokens used instead of ad-hoc visual constants
+- [ ] keyboard focus remains clearly visible
+- [ ] normal text/control contrast is acceptable
+- [ ] hover/pressed/selected/disabled states reviewed
+- [ ] reduced-motion preference removes non-essential animation
+- [ ] injected UI does not leak reset/styles into the host page
 
 ## Host integration cases
 
