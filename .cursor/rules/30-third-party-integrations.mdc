@@ -1,0 +1,15 @@
+---
+description: Safety rules for content scripts, third-party DOM adapters, and destructive site operations.
+globs: ["apps/**/entrypoints/content*.{ts,tsx,js,jsx}", "apps/**/lib/adapters/**/*.{ts,tsx,js,jsx}"]
+alwaysApply: false
+---
+
+Third-party websites are unstable and untrusted integration surfaces.
+
+- Keep selectors, parsers, compatibility probes, and site operations inside the site adapter.
+- Validate expected page/API shape before acting.
+- Fail closed when compatibility checks fail; never guess a destructive selector.
+- Do not scatter host class names or selectors through UI/domain code.
+- For delete/archive/send/submit/bulk-edit actions, require explicit user intent, accurate target scope, bounded concurrency, and per-item result reporting.
+- Do not implement hidden retries that could duplicate a side effect.
+- Undocumented/private web APIs must be documented as fragile in the app SPEC and tested behind an adapter.
