@@ -1,208 +1,133 @@
-# ChatGPT Cleaner + Conversation Vault — QA Contract
+# ChatGPT Cleaner + Message Vault — QA Contract
 
-## 1. Critical user journeys
+## 1. Critical journeys
 
-1. Popup opens ChatGPT and launches the cleanup modal.
-2. Cleanup modal progressively discovers conversations and reports completeness honestly.
-3. Single Archive succeeds/fails visibly without confirmation.
-4. Single Delete requires confirmation and reports the exact item result.
-5. Multi-select Archive runs with bounded concurrency and itemized outcomes.
-6. Multi-select Delete requires exact target-count confirmation and itemized outcomes.
-7. ChatGPT compatibility failure disables destructive operations instead of guessing.
-8. Bookmark control injects once per assistant action row and survives SPA navigation/rerender.
-9. Bookmark captures a complete V1 conversation snapshot and persists it to the Vault.
-10. Re-bookmarking the same conversation updates one complete snapshot and adds/reuses anchors.
-11. A partial capture never overwrites the last complete snapshot.
-12. Vault copy remains readable after the source ChatGPT conversation is archived/deleted.
-13. Extension account login on another browser environment restores Vault data.
-14. Vault deletion affects only the Vault and requires confirmation.
+1. Popup opens ChatGPT and cleanup modal.
+2. Cleanup list loads real account history without depending on visible sidebar rows.
+3. Single/bulk Archive reports itemized results.
+4. Single/bulk Delete requires confirmation and reports itemized results.
+5. Failed destructive requests remain retryable; no hidden destructive retry.
+6. Assistant answer bookmark saves only that answer.
+7. User question bookmark saves only that question when a safe current turn action row exists.
+8. Different saved messages from the same conversation remain independent Vault items.
+9. Re-saving the same message does not duplicate a Vault row.
+10. Source Archive/Delete does not delete Vault items.
+11. Vault deletion does not mutate ChatGPT.
+12. Google/Supabase login restores user-owned Vault items in another browser profile.
 
-## 2. Automated repository gates
+## 2. Automated gates
 
-Every implementation phase must run the relevant subset; final MVP must pass all:
+Final branch/PR must pass:
+- `pnpm verify:repo`
+- lint
+- typecheck
+- unit tests
+- production build
+- extension E2E
 
-- [ ] `pnpm verify:repo`
-- [ ] lint
-- [ ] typecheck
-- [ ] unit tests
-- [ ] production build
-- [ ] extension E2E
+No test/type failure may be ignored to make the gate pass.
 
-No ignored TypeScript/test failures may be introduced to make a phase pass.
+## 3. Adapter unit tests
 
-## 3. Unit-test requirements
+### Discovery
+- session token parsing
+- conversation-list schema validation
+- pagination/end-confirmed semantics
+- collapsed/missing DOM fallback
+- false-empty prevention
 
-### ChatGPT adapter
-- [ ] compatibility probe success/failure
-- [ ] conversation-list parser/response parser fixtures
-- [ ] pagination/end-confirmed semantics
-- [ ] missing/renamed selector behavior
-- [ ] action-row detection
-- [ ] idempotent bookmark injection decision
-- [ ] mutation result parsing
-- [ ] malformed/unknown private-web response fails closed if private adapter exists
+### Archive/Delete
+- Archive emits one PATCH with `is_archived: true`
+- Delete emits one PATCH with `is_visible: false`
+- bearer token is reused only in memory
+- 401/403 invalidates cached token
+- 4xx/5xx returns failure
+- destructive PATCH is not automatically retried
+- Archive cannot fall through to Delete
 
-### Snapshot parser
-- [ ] user/assistant message ordering
-- [ ] paragraphs/headings/lists/quotes
-- [ ] code blocks + language hints
-- [ ] links
-- [ ] tables
-- [ ] unsupported media placeholder
-- [ ] stable source message ID when present
-- [ ] deterministic fallback anchor when absent
-- [ ] completeness detection
-- [ ] malicious/untrusted HTML is not persisted as executable markup
+### Bookmark/action rows
+- current copy-turn cluster detection
+- assistant and user turn role resolution
+- code-block copy ignored
+- one bookmark control per compatible turn
+- rerender/idempotent injection
+- click does not bubble to native controls
+- missing safe row never binds to adjacent message
 
-### Cleanup domain
-- [ ] zero targets
-- [ ] one target
-- [ ] many targets
-- [ ] bounded concurrency
-- [ ] partial failure
-- [ ] retry failed only
-- [ ] abort/stop where implemented
-- [ ] duplicate operation-ID protection
-- [ ] Archive cannot fall through to Delete
+### Message capture
+- selected user question only
+- selected assistant answer only
+- other turns absent from saved JSON
+- source message ID/key
+- role/ordinal provenance
+- paragraph/heading/list/quote/code/table/link
+- unsupported-media placeholder
+- no executable raw HTML
 
-### Vault/data
-- [ ] same source conversation upserts one snapshot
-- [ ] multiple bookmark anchors preserved
-- [ ] duplicate anchor prevented
-- [ ] partial snapshot cannot replace complete snapshot
-- [ ] cloud error returns failure, not success
-- [ ] sign-out clears user cache/session state
-- [ ] user-scoped query wrapper always includes authenticated context as designed
+## 4. Vault/data tests
 
-## 4. DOM fixtures
+- three different messages from one conversation -> three rows
+- same source message re-save -> one row/upsert
+- same fallback key in different conversations -> independent rows
+- cloud error -> failure, not fake local/cloud success
+- `vault_items` RLS: own CRUD only
+- unauthenticated and cross-user access denied
+- legacy whole-conversation tables are not new runtime write targets
+- Vault item delete leaves ChatGPT source untouched
 
-Maintain sanitized HTML/structured fixtures representing the current known ChatGPT surfaces used by the adapter.
+## 5. E2E
 
-At minimum include:
-- conversation page with multiple user/assistant turns;
-- assistant action row;
-- code block/table/link examples;
-- unsupported media example;
-- intentionally changed/missing selector fixture.
+Use built unpacked extension with controlled fixtures/stubs where possible:
+- extension loads without manifest/service-worker error
+- cleanup modal opens/closes
+- list loading/error/completeness UI
+- per-row/bulk action progress + failure UI
+- bookmark button survives MutationObserver rerender
+- user + assistant compatible turn injection fixture
+- saved-message Vault list/detail render safely
+- no captured source HTML execution
 
-Fixtures must contain no real personal conversation data or auth/session material.
+Real ChatGPT destructive mutation remains a manual lane. Never mass-delete real user data in automated E2E.
 
-## 5. Extension E2E requirements
+## 6. Manual real-account smoke
 
-Use persistent Chromium with the built unpacked extension.
+Before MVP DONE:
+- signed-in history returns non-empty real list when account has chats
+- use an intentionally disposable chat for Archive
+- verify archived chat actually leaves active history / appears in ChatGPT archive behavior
+- use a second intentionally disposable chat for Delete
+- confirm Delete first, then verify source is unavailable/removed
+- save one harmless assistant answer; Vault contains only that answer
+- save one harmless user question if a compatible user action row appears; Vault contains only that question
+- verify another message from the same conversation was not copied
+- source deletion does not remove the saved Vault item
+- restart extension/Chrome and verify persistence
+- second profile verifies cloud restore
 
-Required scenarios:
-- [ ] extension loads without manifest/service-worker error
-- [ ] popup primary actions work
-- [ ] content script injects only on allowed ChatGPT host
-- [ ] cleanup modal opens/closes and traps/restores focus correctly
-- [ ] injected UI is style-isolated from host page
-- [ ] bookmark button is not duplicated after SPA navigation/rerender
-- [ ] mocked/stubbed cleanup operation exposes progress + failures correctly
-- [ ] Vault page renders a saved structured snapshot safely
-- [ ] local preference persists across extension reload
-- [ ] service-worker termination/restart does not create an unsafe duplicate destructive action
+## 7. Supabase/auth
 
-Real ChatGPT mutation E2E should be a controlled/manual lane unless a safe disposable test target is available. Never mass-delete real user data as an automated test.
+- migration `202608290002_message_vault_items.sql` applies cleanly
+- RLS enabled on `vault_items`
+- authenticated own CRUD succeeds
+- second user cannot read/write first user's items
+- Google OAuth callback returns to extension
+- no service-role/client secret in bundle
+- no ChatGPT token/cookie persisted or sent to Supabase
 
-## 6. Supabase/auth QA
+## 8. Release blockers
 
-Before real-cloud MVP completion:
-- [ ] migration applies cleanly to a test/dev project
-- [ ] RLS enabled on all user-data tables
-- [ ] authenticated user can CRUD only own Vault data
-- [ ] unauthenticated request cannot read/write Vault records
-- [ ] simulated second user cannot read/write first user's records
-- [ ] Google login callback returns to extension successfully
-- [ ] new browser/profile login restores existing Vault list
-- [ ] sign-out removes local user-specific state
-- [ ] no service-role/client secret appears in built extension
-
-If Supabase credentials/config are not yet available, all non-cloud tests must still run and the missing real-cloud gate must be reported explicitly as BLOCKED/NOT_RUN rather than faked.
-
-## 7. Visual/theme QA
-
-- [ ] Pretendard comes from bundled shared package
-- [ ] light theme
-- [ ] dark theme
-- [ ] system theme
-- [ ] visible keyboard focus
-- [ ] modal focus trap and escape behavior
-- [ ] hover/pressed/selected/disabled/loading states
-- [ ] destructive action distinction
-- [ ] selected-count clarity
-- [ ] long titles truncate/wrap correctly
-- [ ] empty/loading/error/partial-failure states
-- [ ] reduced motion
-- [ ] no ChatGPT CSS leakage into extension UI
-- [ ] no extension reset/style leakage into ChatGPT
-
-## 8. Cleaner destructive QA matrix
-
-### Archive
-- [ ] single
-- [ ] bulk
-- [ ] partial failure
-- [ ] retry failed only
-- [ ] list state updates by stable source ID
-
-### Delete
-- [ ] single target confirmation
-- [ ] bulk exact-count confirmation
-- [ ] cancellation performs zero mutation
-- [ ] partial failure
-- [ ] retry failed only
-- [ ] compatibility probe failure performs zero mutation
-- [ ] duplicated user click cannot create duplicate destructive command
-
-## 9. Snapshot/Vault QA matrix
-
-- [ ] complete text-only conversation
-- [ ] Markdown-rich conversation
-- [ ] code/table/link conversation
-- [ ] unsupported media represented honestly
-- [ ] first bookmark creates snapshot + anchor
-- [ ] second bookmark same conversation updates snapshot + retains first anchor
-- [ ] same response re-bookmark does not duplicate anchor
-- [ ] capture partial after earlier complete save preserves earlier complete data
-- [ ] source link unavailable does not break Vault reader
-- [ ] source ChatGPT deletion does not delete Vault record
-- [ ] Vault deletion does not delete ChatGPT source
-
-## 10. Manual smoke before declaring MVP DONE
-
-- [ ] production build loaded unpacked
-- [ ] real ChatGPT current UI compatibility checked
-- [ ] at least one disposable/non-critical conversation Archive tested
-- [ ] Delete tested only on an intentionally disposable conversation
-- [ ] bookmark/save tested on a non-sensitive test conversation
-- [ ] saved snapshot opened from Vault
-- [ ] source test conversation deleted and Vault copy verified to remain
-- [ ] restart Chrome / extension and verify persistence
-- [ ] second Chrome profile/device-like environment verifies cloud restore
-- [ ] console contains no sensitive content/session logs
-- [ ] network destinations are only expected ChatGPT/Supabase/auth endpoints
-- [ ] effective manifest matches `PERMISSIONS.md`
-
-## 11. Release blockers
-
-Do not mark MVP DONE if any of these are true:
-- destructive action can run when compatibility is unknown;
-- Delete can run without the defined confirmation;
-- UI claims `all conversations` without confirmed end-of-list;
-- Vault UI claims successful save before persistence confirmation;
-- partial capture can overwrite complete snapshot;
-- ChatGPT auth/session data is persisted or transmitted to Supabase;
+Do not mark MVP DONE if:
+- Delete can run without defined confirmation;
+- destructive HTTP failure is shown as success;
+- UI claims full conversation history without confirmed end;
+- bookmark saves more than the selected message;
+- same message creates uncontrolled duplicates;
+- Vault save success appears before persistence confirmation;
+- ChatGPT credentials are persisted/transmitted;
 - RLS isolation is unverified;
-- remote executable code exists;
-- required QA failure is hidden or marked as passed without evidence.
+- Actions/repository QA is red;
+- required real destructive smoke has not been performed on disposable targets.
 
-## 12. Result record
+## 9. Result record
 
-For each phase Issue, record:
-- commit/PR;
-- automated QA results;
-- manual QA performed/not performed;
-- residual risk;
-- intentionally unfinished work;
-- SELF review conclusion.
+Each task Issue records commit/PR, automated QA, manual QA NOT_RUN/PASS/FAIL, residual risks, and review conclusion.
