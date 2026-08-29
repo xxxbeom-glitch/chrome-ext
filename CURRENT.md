@@ -16,24 +16,23 @@ Last updated: 2026-08-29
 | Issue | App / scope | State | Owner | Review mode | Branch |
 | --- | --- | --- | --- | --- | --- |
 | #6 | `apps/chatgpt-cleaner` / MVP implementation epic | READY | CURSOR | SELF | parent epic |
-| #13 | `apps/chatgpt-cleaner` / Phase 3 cleanup mutations | RUNNING | CURSOR | SELF | `feat/chatgpt-cleaner-p3-cleanup-mutations` |
+| #15 | `apps/chatgpt-cleaner` / live Archive-Delete binding | BLOCKED | USER | USER | n/a |
 
 Concurrent active tasks are allowed only when their declared write scopes are disjoint. See `docs/COLLABORATION.md`.
 
 ## Current repository baseline
 
-- Chrome Manifest V3 / WXT / Vitest / Playwright / shared design-system.
-- ChatGPT Cleaner Phases 0–2 DONE on `main` (bootstrap, UI shell, read-only adapter).
-- Durable MVP decisions: `docs/decisions/DEC-0002-chatgpt-cleaner-mvp-contract.md`.
+- Phases 0–3 engineering on `main`: WXT bootstrap, UI shell, read-only adapter, fail-closed cleanup engine.
+- Live ChatGPT Archive/Delete host binding is intentionally unbound (fail-closed).
 
 ## Next planned product work
 
-1. Phase 3 cleanup mutation engine with fail-closed compatibility gates.
-2. Continue Phases 4–7 automatically unless a stop condition triggers.
+1. Continue Phase 4 local Vault domain while #15 remains BLOCKED.
+2. Phases 5–7 afterward; interrupt only for additional stop conditions.
 
 ## Blockers / decisions needed
 
-- Live ChatGPT Archive/Delete selector validation still needs disposable-conversation smoke before claiming real-host mutation PASS.
+- **#15 BLOCKED (USER):** live ChatGPT Archive/Delete binding needs disposable-conversation smoke and/or approval to investigate private-web mutation endpoints. Recommendation recorded on the Issue (defer live mutation; continue Vault phases).
 - Supabase/Google setup may BLOCK Phase 5 activation only.
 - Repository is public; keep Issues/PRs public-safe.
 
