@@ -59,6 +59,33 @@ Preferred duplicate prevention:
 
 Only create if cloud-synced settings are actually needed. Prefer local extension storage for simple theme/UI preferences.
 
+### `vault_media` (planned V1.1, not MVP)
+
+When generated media/file backup is implemented, prefer a dedicated user-scoped metadata table rather than embedding binary data in `snapshot jsonb`.
+
+Conceptual fields:
+- `id uuid primary key default gen_random_uuid()`
+- `user_id uuid not null references auth.users(id)`
+- `vault_conversation_id uuid not null references vault_conversations(id) on delete cascade`
+- `source_message_id text`
+- `message_ordinal integer`
+- `media_kind text` (for example `generated_image`, `generated_file`)
+- `filename text`
+- `mime_type text`
+- `byte_size bigint`
+- `content_hash text`
+- `storage_bucket text`
+- `storage_path text not null`
+- `created_at timestamptz not null default now()`
+
+Rules:
+- metadata rows are user-scoped and RLS-protected;
+- binary bytes live in private extension-owned object storage, not Postgres JSONB;
+- storage paths must be user-scoped and non-guessable enough for safe access patterns;
+- use signed/authenticated retrieval from the extension, not public buckets by default;
+- identical media may be deduplicated by content hash where practical;
+- do not store or rely on expiring ChatGPT download URLs as the durable backup reference.
+
 ## 4. Snapshot JSON schema
 
 Canonical cloud snapshot is structured JSON, not raw ChatGPT HTML.
@@ -80,7 +107,14 @@ Conceptual structure:
       "blocks": [
         { "type": "paragraph", "text": "..." },
         { "type": "code", "language": "ts", "text": "..." },
-        { "type": "link", "href": "https://...", "label": "..." }
+        { "type": "link", "href": "https://...", "label": "..." },
+        {
+          "type": "unsupported-media",
+          "mediaKind": "generated_image|generated_file|uploaded_file|audio|artifact|unknown",
+          "label": "...",
+          "filename": "...",
+          "mimeType": "..."
+        }
       ]
     }
   ]
@@ -96,6 +130,12 @@ V1 block vocabulary must cover:
 - table;
 - link;
 - unsupported-media placeholder.
+
+V1 media placeholder rules:
+- preserve only safe metadata that is visible or reliably detectable;
+- never imply that a binary was backed up when only a placeholder exists;
+- do not persist secret-bearing, token-bearing, or expiring authenticated ChatGPT URLs merely to make the placeholder look downloadable;
+- `complete` in V1 means complete enough for the text-first V1 contract, not binary-complete.
 
 Do not store executable host markup/scripts.
 
@@ -127,15 +167,31 @@ If capture is partial:
 
 Where practical, snapshot upsert + bookmark insertion should be executed through a transaction/RPC or otherwise designed so a failure cannot silently create misleading mixed state.
 
+### Planned V1.1 media transaction semantics
+
+When generated media/file backup is added:
+1. the bookmark still triggers a whole-conversation snapshot, not a single-message-only backup;
+2. enumerate supported generated media/files in the captured conversation;
+3. retrieve each binary only through evidence-backed, authenticated source behavior;
+4. upload the durable copy to private Supabase Storage;
+5. persist/update `vault_media` metadata and link it back to the conversation/message;
+6. only mark that media item as backed up after storage persistence succeeds;
+7. a failed media copy must remain visibly failed/unsupported rather than silently claiming a complete binary backup;
+8. reuse already-persisted identical media where practical.
+
+The text snapshot may remain valid even if an optional V1.1 media item fails, but the UI must distinguish text snapshot completeness from media backup completeness.
+
 ## 7. RLS contract
 
 Enable RLS on every user-data table.
 
-Required policy semantics for `vault_conversations` and `bookmarks`:
+Required policy semantics for `vault_conversations`, `bookmarks`, and future `vault_media`:
 - SELECT only where `user_id = auth.uid()`;
 - INSERT only where `user_id = auth.uid()`;
 - UPDATE only where `user_id = auth.uid()`;
 - DELETE only where `user_id = auth.uid()`.
+
+Private Storage policies for V1.1 must enforce the same user ownership boundary for object read/write/delete operations.
 
 Cursor must create version-controlled migration SQL under the app (for example `supabase/migrations/`) rather than relying only on dashboard clicks.
 
@@ -194,6 +250,7 @@ Never commit:
 ### Deleting Vault conversation
 - explicit confirmation required;
 - deletes the Vault snapshot and cascades its bookmark anchors;
+- when V1.1 exists, also removes or schedules removal of media metadata and owned Storage objects that are no longer referenced;
 - does not alter the ChatGPT original.
 
 The UI must make these two deletion domains visually/textually distinct.
@@ -212,7 +269,7 @@ Rules:
 - stale cache must be recognizable;
 - sign-out clears user-specific cache/session material;
 - a cache failure must not delete cloud data;
-- never use `chrome.storage.sync` for full snapshot bodies.
+- never use `chrome.storage.sync` for full snapshot bodies or media binaries.
 
 ## 12. Future-compatible fields
 
@@ -221,6 +278,14 @@ Do not implement unless required, but preserve schema room for:
 - user notes;
 - full-text search index;
 - snapshot version history;
-- stored media references.
+- stored media references;
+- media backup status / error state;
+- user storage quota/accounting;
+- optional uploaded-source-file backup.
 
-These are explicitly out of MVP and must not delay V1.
+Roadmap contract:
+- **V1:** text/structured-content snapshot + safe media/file placeholders/metadata;
+- **V1.1:** generated images and generated downloadable files copied to private extension-owned Storage;
+- **V2:** optional, quota-aware backup of user-uploaded source files.
+
+These are explicitly out of MVP unless promoted by a later product decision and must not delay V1.
