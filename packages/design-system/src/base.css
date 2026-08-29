@@ -1,0 +1,140 @@
+@import "pretendard/dist/web/variable/pretendardvariable.css";
+@import "./tokens.css";
+
+/*
+ * Use this stylesheet only in extension-owned documents or isolated Shadow DOM.
+ * Never attach this reset directly to a third-party host document.
+ */
+
+:root,
+:host {
+  font-family: var(--ce-sys-font-family-body);
+  font-size: 16px;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+  min-height: 0;
+  background: var(--ce-sys-color-bg-canvas);
+  color: var(--ce-sys-color-text-primary);
+  font-family: var(--ce-sys-font-family-body);
+  font-size: var(--ce-sys-type-body-md-size);
+  font-weight: var(--ce-sys-type-body-md-weight);
+  line-height: var(--ce-sys-type-body-md-line-height);
+}
+
+button,
+input,
+select,
+textarea {
+  margin: 0;
+  font: inherit;
+  color: inherit;
+}
+
+button,
+[role="button"],
+a,
+input,
+select,
+textarea,
+[tabindex] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+select:not(:disabled) {
+  cursor: pointer;
+}
+
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+::selection {
+  background: var(--ce-sys-color-selection-bg);
+  color: var(--ce-sys-color-selection-text);
+}
+
+:focus-visible {
+  outline: var(--ce-sys-border-width-focus) solid var(--ce-sys-color-border-focus);
+  outline-offset: var(--ce-sys-focus-ring-offset);
+  box-shadow: 0 0 0 var(--ce-sys-focus-ring-size) var(--ce-sys-color-focus-ring);
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+hr {
+  border: 0;
+  border-top: var(--ce-sys-border-width-default) solid var(--ce-sys-color-divider);
+}
+
+code,
+kbd,
+pre,
+samp {
+  font-family: var(--ce-sys-font-family-code);
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+svg {
+  fill: currentColor;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  min-height: 28px;
+  border: 3px solid transparent;
+  border-radius: var(--ce-ref-radius-full);
+  background: var(--ce-sys-color-scrollbar-thumb);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ce-sys-color-scrollbar-thumb-hover);
+  background-clip: padding-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
