@@ -1,11 +1,11 @@
 name: Task
-about: Implementation-ready unit of work for ChatGPT ↔ Cursor execution.
+about: Implementation-ready unit of work for Cursor / ChatGPT / user execution.
 title: "[TASK] "
 body:
   - type: markdown
     attributes:
       value: |
-        Use this form for implementation work. A task is not READY until its scope and acceptance criteria are objective.
+        Use this form for implementation work. A task is not READY until its scope and acceptance criteria are objective. Cursor-only execution is supported; SELF review still requires a separate review pass.
 
   - type: input
     id: app
@@ -71,6 +71,18 @@ body:
       required: true
 
   - type: dropdown
+    id: review_mode
+    attributes:
+      label: Review Mode
+      description: SELF is the routine Cursor-only default. CHATGPT and USER remain available when desired.
+      options:
+        - SELF
+        - CHATGPT
+        - USER
+    validations:
+      required: true
+
+  - type: dropdown
     id: owner
     attributes:
       label: Initial Owner
@@ -101,4 +113,6 @@ body:
         - label: I confirmed this task does not rely on unstated chat history.
           required: true
         - label: Permission/privacy/product-policy changes are either absent or explicitly documented.
+          required: true
+        - label: If SELF review is selected, Cursor will perform a distinct second-pass review before DONE.
           required: true
