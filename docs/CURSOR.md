@@ -8,8 +8,8 @@ Cursor supports root and nested `AGENTS.md` files plus scoped Project Rules unde
 
 Use them together:
 
-1. `CURRENT.md` is the first recovery checkpoint for current state and active work;
-2. the active GitHub Issue contains the executable task / handoff conversation;
+1. `CURRENT.md` is the first recovery checkpoint and lists all active work;
+2. the target GitHub Issue contains the executable task / handoff conversation and exact state transitions;
 3. root `AGENTS.md` is the repository-wide policy and architecture contract;
 4. `apps/<slug>/AGENTS.md` adds app-local context and boundaries;
 5. `.cursor/rules/00-core.mdc` and `.cursor/rules/05-github-collaboration.mdc` always apply;
@@ -24,20 +24,24 @@ Do not add a legacy `.cursorrules` file.
 
 For a GitHub-backed task, Cursor must:
 
-1. read `CURRENT.md`;
+1. read `CURRENT.md` and inspect every active-work row for scope collisions;
 2. read `docs/COLLABORATION.md`;
 3. run `pnpm agent:check` when GitHub task state will be changed;
-4. read the active GitHub Issue and latest state transition comments;
-5. read root `AGENTS.md` and matching `.cursor/rules/*.mdc`;
-6. identify the target `apps/<slug>`;
-7. read app `AGENTS.md`, `SPEC.md`, `PERMISSIONS.md`, and `QA.md`;
-8. inspect the implementation/tests and working-tree state;
-9. claim the Issue using the standard `STATE: RUNNING / OWNER: CURSOR` comment;
-10. implement the smallest coherent change without touching unrelated apps;
-11. run repository verification and relevant QA;
-12. hand off in the Issue using the mandatory REVIEW evidence format.
+4. read the target GitHub Issue and determine the latest exact valid `STATE:` / `OWNER:` pair;
+5. if no exact valid state header exists, treat the Issue as DRAFT and do not implement;
+6. read root `AGENTS.md` and matching `.cursor/rules/*.mdc`;
+7. identify the target `apps/<slug>` or explicit shared/root scope;
+8. read app `AGENTS.md`, `SPEC.md`, `PERMISSIONS.md`, and `QA.md` when an app is involved;
+9. inspect the implementation/tests and working-tree state;
+10. ensure the target write scope is disjoint from other RUNNING tasks;
+11. claim the Issue using the standard `STATE: RUNNING / OWNER: CURSOR` comment;
+12. implement the smallest coherent change without touching unrelated apps;
+13. run repository verification and relevant QA;
+14. hand off in the Issue using the mandatory REVIEW evidence format.
 
-If the user starts a complete implementation-level task directly in Cursor, Cursor creates a task Issue before implementation and follows the same sequence. Product/UX/policy ambiguity must become a decision/handoff Issue rather than an implicit guess.
+`pnpm agent:check` fetches `origin/main` and fails if current HEAD does not contain the latest main baseline. Do not claim a task from a stale base.
+
+If the user starts a complete implementation-level task directly in Cursor, Cursor creates a task Issue with an exact state header before implementation and follows the same sequence. Product/UX/policy ambiguity must become a decision/handoff Issue rather than an implicit guess.
 
 ## Rule layout
 
@@ -75,8 +79,8 @@ Terminal commands and external MCP tools may operate outside `.cursorignore` pro
 Minimal prompt:
 
 ```text
-Open this repo and continue from CURRENT.md and the active GitHub Issue.
-Follow AGENTS.md, docs/COLLABORATION.md, and matching Cursor/app rules.
+Open this repo and continue from CURRENT.md.
+Choose/read the GitHub Issue assigned to CURSOR, inspect other active scopes for collisions, and follow AGENTS.md, docs/COLLABORATION.md, and matching Cursor/app rules.
 Do not broaden scope or permissions.
 Run the required QA and hand the result back in the Issue using the repository handoff format.
 ```
