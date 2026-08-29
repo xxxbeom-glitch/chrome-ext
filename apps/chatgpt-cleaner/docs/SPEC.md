@@ -178,12 +178,15 @@ Bulk operation requirements:
 
 The extension injects one bookmark/save control near each assistant-response action row.
 
+Live ChatGPT no longer exposes `data-testid="assistant-action-row"`. The adapter locates the turn action cluster from `copy-turn-action-button` (or a localized turn-copy control) and its surrounding action group. The obsolete testid remains a legacy/fixture fallback. A locator miss must set `data-ce-bookmark-compat="missing-action-row"` and an internal probe reason; it must not fail silently. See `lib/adapters/chatgpt/dom/EVIDENCE.md`.
+
 Requirements:
 - injection must be idempotent across SPA navigation and rerender;
 - do not duplicate controls when host DOM mutates;
+- insert after the native more (`...` / 더보기) control and before 출처 when those exist;
 - associate the control with a stable message identifier when available, otherwise use a deterministic capture-time anchor descriptor;
 - clicking the control must not invoke ChatGPT's native buttons;
-- show `saving`/success/failure state owned by the extension;
+- show `saving`/success/failure state owned by the extension (`보관함에 저장` / `저장 중` / `저장됨` / `다시 시도`);
 - success means cloud persistence (or explicit local-only development mode), not merely DOM capture.
 
 ## 11. Snapshot capture contract
