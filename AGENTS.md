@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This file defines mandatory repository-wide instructions for human and AI contributors.
+This file defines mandatory repository-wide instructions for human and AI contributors, including Cursor Agent.
 
 ## 1. Repository purpose
 
@@ -18,13 +18,14 @@ This is a multi-extension monorepo. Do not optimize the repository around one ex
 
 ## 3. Architecture rules
 
-- Keep entrypoints thin. Business logic belongs in `lib/` or shared packages.
+- Keep entrypoints thin. Business logic belongs in `lib/` or approved shared packages.
 - Treat background service workers as ephemeral. Never rely on global in-memory state surviving between events.
 - Persist durable state in `chrome.storage` or another explicitly documented store.
 - Content scripts are untrusted-page-adjacent code. Validate all data crossing page/extension boundaries.
 - Do not expose privileged extension APIs directly to page scripts.
 - Message schemas must be typed, narrow, and validated.
-- Shared packages may be created only after real duplication exists across at least two extensions.
+- Feature/domain packages may move to `packages/` only after real duplication exists across at least two extensions.
+- Repository-mandated foundation packages, such as `packages/design-system`, are explicit exceptions because every extension is required to share them.
 
 ## 4. Permission discipline
 
@@ -71,15 +72,16 @@ For each meaningful change:
 3. inspect current architecture before changing it;
 4. implement the smallest coherent slice;
 5. add or update tests in the same change;
-6. run static checks, unit tests, build, and relevant E2E;
+6. run repository verification, static checks, unit tests, build, and relevant E2E;
 7. perform manual extension smoke QA when browser behavior changed;
-8. update documentation when permissions, data flow, UX contract, or architecture changed.
+8. update documentation when permissions, data flow, UX contract, design tokens, or architecture changed.
 
 Do not silently broaden scope.
 
 ## 8. Definition of done
 
 A change is not done until:
+- `pnpm verify:repo` passes;
 - lint passes;
 - TypeScript passes with no ignored errors added;
 - unit tests pass;
@@ -92,9 +94,9 @@ A change is not done until:
 
 ## 9. Testing expectations
 
-Unit-test pure logic aggressively: parsing, filtering, storage adapters, message validation, permission decisions, and state transitions.
+Unit-test pure logic aggressively: parsing, filtering, storage adapters, message validation, permission decisions, state transitions, and theme utilities.
 
-E2E-test extension-specific behavior: install/load, popup/options/side-panel UI, content-script injection, message passing, storage persistence, permission prompts, and critical host-page integration.
+E2E-test extension-specific behavior: install/load, popup/options/side-panel UI, content-script injection, message passing, storage persistence, permission prompts, theme behavior, and critical host-page integration.
 
 When a third-party website DOM is involved, isolate selectors behind an adapter and test failure behavior. Never scatter selectors throughout business logic.
 
@@ -128,12 +130,50 @@ Before adding a runtime dependency, ask whether the platform or a small local he
 
 Lock dependencies and review unexpected lockfile expansion.
 
+Pretendard is an approved shared UI dependency and must be bundled from the pinned npm package through `packages/design-system`; do not load it from a CDN in extension runtime code.
+
 ## 13. Change boundaries
 
 Do not refactor unrelated extensions while implementing one app.
-Do not move stable shared code into `packages/` speculatively.
+Do not move feature/domain code into `packages/` speculatively.
 Do not change repository-wide tooling for an app-local preference without a demonstrated cross-repo benefit.
+Repository foundation packages explicitly mandated here may be shared from day one.
 
-## 14. Documentation hierarchy
+## 14. Design system
+
+All extension-owned UI must use the shared design foundation in `packages/design-system` unless the app SPEC documents a justified exception.
+
+Rules:
+- Pretendard Variable is the default typeface.
+- Support light, dark, and system theme behavior from the first UI implementation.
+- Use the token hierarchy `ref` (primitive) -> `sys` (semantic) -> `comp` (component).
+- Application UI should consume `sys` and `comp` tokens. Do not bind product code directly to primitive color tokens unless defining or extending the design system itself.
+- Do not hard-code colors, shadows, radii, spacing, typography values, focus rings, or motion values when an appropriate shared token exists.
+- New shared visual values must be added to the design system first and named by role rather than by screen or feature.
+- Use semantic status colors for success, warning, danger, and info. Do not use raw red/green/blue values in product UI.
+- Preserve visible keyboard focus and WCAG AA contrast for normal text wherever technically practical.
+- Respect `prefers-reduced-motion`.
+- Injected host-page UI should use Shadow DOM or equivalent strong style isolation; do not import the global base stylesheet directly into a third-party page root.
+
+Read `docs/DESIGN_SYSTEM.md` before implementing UI.
+
+## 15. Cursor compatibility
+
+Cursor officially supports root and nested `AGENTS.md` files. This root file remains the human-readable source of non-negotiable repository policy.
+
+Cursor-specific scoped rules live in `.cursor/rules/*.mdc` and are version-controlled.
+
+When using Cursor:
+- read and obey this `AGENTS.md` plus every matching `.cursor/rules/*.mdc` rule;
+- do not create or rely on a legacy `.cursorrules` file;
+- keep Cursor rules focused and scoped instead of duplicating this entire document into every rule;
+- do not weaken `.cursorignore` to make an agent task easier;
+- treat terminal/MCP access as potentially outside `.cursorignore` protection and never intentionally read secrets;
+- inspect the target app's docs before editing implementation files;
+- run `pnpm qa` before declaring implementation complete unless the task is documentation-only and the relevant checks are explicitly unnecessary.
+
+Read `docs/CURSOR.md` for the expected Cursor workflow.
+
+## 16. Documentation hierarchy
 
 Repository rules in this file override app-local convenience. App-specific decisions belong under `apps/<slug>/docs/`. If an app intentionally deviates from a repository default, document the reason and trade-off in its SPEC.
