@@ -1,0 +1,14 @@
+{
+  "name": "chrome-ext-workspace",
+  "private": true,
+  "version": "0.0.0",
+  "packageManager": "pnpm@10.15.0",
+  "scripts": {
+    "lint": "pnpm -r --if-present lint",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "pnpm -r --if-present test",
+    "build": "pnpm -r --if-present build",
+    "test:e2e": "pnpm -r --if-present test:e2e",
+    "qa": "pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm test:e2e"
+  }
+}
