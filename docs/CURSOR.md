@@ -4,29 +4,33 @@ This repository is intentionally configured for Cursor Agent as well as human de
 
 ## Instruction sources
 
-Cursor supports both root `AGENTS.md` and scoped Project Rules under `.cursor/rules/*.mdc`.
+Cursor supports root and nested `AGENTS.md` files plus scoped Project Rules under `.cursor/rules/*.mdc`.
 
 Use them together:
 
-1. `AGENTS.md` is the readable repository-wide policy and architecture contract.
-2. `.cursor/rules/00-core.mdc` is always applied.
-3. Scoped rules apply automatically when editing matching app, design, integration, or test files.
-4. App-specific product decisions remain in `apps/<slug>/docs/`.
+1. root `AGENTS.md` is the readable repository-wide policy and architecture contract;
+2. `apps/<slug>/AGENTS.md` adds app-local context and boundaries for that extension;
+3. `.cursor/rules/00-core.mdc` is always applied;
+4. scoped rules apply automatically when editing matching app, design, integration, or test files;
+5. detailed product decisions remain in `apps/<slug>/docs/`.
 
-Do not add a legacy `.cursorrules` file. Keep new Cursor instructions in focused `.mdc` files.
+Every app must have a nested `AGENTS.md`, created from `templates/APP_AGENTS.md` and filled with the app identity.
+
+Do not add a legacy `.cursorrules` file. Keep new Cursor project instructions in focused `.mdc` files or the appropriate root/app `AGENTS.md`.
 
 ## Expected Cursor start sequence
 
 For a new task, Cursor should:
 
-1. read `AGENTS.md`;
+1. read root `AGENTS.md`;
 2. identify the target `apps/<slug>`;
-3. read that app's `SPEC.md`, `PERMISSIONS.md`, and `QA.md`;
-4. inspect relevant existing implementation and tests;
-5. state or infer the smallest coherent change boundary;
-6. implement without touching unrelated apps;
-7. run repository verification and relevant QA;
-8. report changed files, checks performed, and any unresolved risk.
+3. read that app's nested `AGENTS.md`;
+4. read that app's `SPEC.md`, `PERMISSIONS.md`, and `QA.md`;
+5. inspect relevant existing implementation and tests;
+6. state or infer the smallest coherent change boundary;
+7. implement without touching unrelated apps;
+8. run repository verification and relevant QA;
+9. report changed files, checks performed, and any unresolved risk.
 
 ## Rule layout
 
@@ -55,7 +59,7 @@ Important: terminal commands and external MCP tools may operate outside `.cursor
 Good task prompt:
 
 ```text
-Read AGENTS.md and the matching .cursor/rules first.
+Read root AGENTS.md, the app AGENTS.md, and matching .cursor/rules first.
 Work only in apps/<slug> unless a shared change is required.
 Read the app SPEC/PERMISSIONS/QA before implementation.
 Implement <scope>.
