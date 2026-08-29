@@ -15,7 +15,7 @@ Last updated: 2026-08-29
 
 | Issue | App / scope | State | Owner | Review mode | Branch |
 | --- | --- | --- | --- | --- | --- |
-| #4 | repo / Cursor standalone workflow | RUNNING | CHATGPT | SELF | main |
+| — | No active task claimed | — | — | — | — |
 
 Concurrent active tasks are allowed only when their declared write scopes are disjoint. See `docs/COLLABORATION.md`.
 
@@ -28,21 +28,23 @@ Concurrent active tasks are allowed only when their declared write scopes are di
 - Pretendard bundled locally through `@chrome-ext/design-system`.
 - Cursor project rules and nested app `AGENTS.md` convention.
 - GitHub Issues/PRs/CI collaboration contract with explicit task ownership and disjoint-scope concurrency rules.
-- ChatGPT review is optional; Cursor-only `REVIEW_MODE: SELF` is supported with a separate second-pass review.
-- Collaboration foundation Issue #1 is DONE and closed.
+- Cursor-only execution is supported through `REVIEW_MODE: SELF` with a mandatory separate second-pass review.
+- Optional `REVIEW_MODE: CHATGPT` and `REVIEW_MODE: USER` remain available without changing the underlying workflow.
+- Unresolved material product/policy/privacy/permission/destructive-action decisions move to `DECISION_NEEDED` instead of being guessed.
+- Collaboration foundation Issues #1 and #4 are DONE and closed.
 
 ## Next planned product work
 
-1. Finish Issue #4 and verify the Cursor-only workflow contract.
-2. Run `pnpm agent:check` once in the user's real Cursor/local clone after pulling latest `main`.
-3. Create the first app under `apps/` for ChatGPT conversation management.
-4. Create its GitHub Task Issue and write SPEC / PERMISSIONS / QA before privileged implementation.
+1. Run `pnpm agent:check` once in the user's real Cursor/local clone after pulling latest `main`.
+2. Create the first app under `apps/` for ChatGPT conversation management.
+3. Create its GitHub Task Issue and write SPEC / PERMISSIONS / QA before privileged implementation.
 
 ## Blockers / decisions needed
 
 - No repository-side blocker.
 - Local Cursor preflight (`pnpm agent:check`) still needs one real run on the user's development machine because GitHub Actions cannot validate the user's local `gh` authentication or local git state.
 - Repository is public. Keep Issues/PRs public-safe; switch the repository to private before storing private operational context.
+- GitHub server-side branch protection/ruleset is still optional hardening; repository rules currently enforce the workflow at agent/CI level, not at the server push-policy level.
 
 ## Recovery rule
 
