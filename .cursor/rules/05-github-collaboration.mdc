@@ -1,0 +1,39 @@
+---
+description: GitHub task, ownership, handoff, and recovery rules for Cursor work in this repository.
+alwaysApply: true
+---
+
+GitHub is the operational hub for ChatGPT ↔ Cursor collaboration in this repository.
+
+Before meaningful work:
+1. read @CURRENT.md;
+2. read @docs/COLLABORATION.md;
+3. identify and read the active GitHub Issue;
+4. read @AGENTS.md and relevant app-local `AGENTS.md` / SPEC / PERMISSIONS / QA;
+5. run `pnpm agent:check` when the task requires GitHub state changes;
+6. inspect `git status` and current branch.
+
+Ownership:
+- Never implement a `DRAFT` task.
+- Normally implement only when the Issue is `STATE: READY` and `OWNER: CURSOR`.
+- If the user directly gives a complete implementation-level task, create a task Issue first and then claim it.
+- Do not work concurrently on a scope currently owned by CHATGPT or USER.
+
+Claim comment format:
+```text
+STATE: RUNNING
+OWNER: CURSOR
+BRANCH: <branch>
+BASE: main
+SCOPE: <one-line scope>
+```
+
+Completion comment format is defined in @docs/COLLABORATION.md and is mandatory. Include commit/PR, changed behavior, QA results, result, risk, and intentionally unfinished work.
+
+Do not silently skip failing QA. Do not close the Issue yourself unless the task explicitly delegates review authority to Cursor. Default completion state is `REVIEW` with `OWNER: CHATGPT`.
+
+If implementation requires a product/UX/policy/permission/privacy decision that is not already settled, do not guess. Post or create a decision/handoff Issue with `STATE: DECISION_NEEDED` and `OWNER: USER` or `OWNER: CHATGPT` as appropriate.
+
+`CURRENT.md` is normally maintained by ChatGPT on main. Do not edit it from feature branches unless the task explicitly requires it.
+
+Do not use local notes, editor memory, chat history, or terminal scrollback as replacement task state. Durable handoff must be in GitHub.
