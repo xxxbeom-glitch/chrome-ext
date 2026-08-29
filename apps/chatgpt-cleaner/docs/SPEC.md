@@ -1,353 +1,190 @@
-# ChatGPT Cleaner + Conversation Vault — Technical SPEC
+# ChatGPT Cleaner + Message Vault — Technical SPEC
 
-Status: implementation-ready baseline, subject only to explicit GitHub decisions.
+Status: implementation contract
 
 ## 1. Single purpose
 
-Help the user clean up ChatGPT conversations while preserving selected conversations as independent user-owned cloud snapshots.
+Help the user clean up ChatGPT conversations and independently save selected ChatGPT questions/answers as user-owned Vault items.
 
-## 2. Target hosts
+## 2. Host/cloud boundaries
 
-Required:
-- `https://chatgpt.com/*`
-
-Cloud API:
-- one configured Supabase project endpoint.
-
-No wildcard host access is allowed.
+Required host: `https://chatgpt.com/*`.
+Cloud: one configured Supabase project.
+No `<all_urls>` or wildcard cloud hosts.
 
 ## 3. Entrypoints
 
-Required V1 entrypoints:
+- background: privileged coordination/auth/tab routing
+- content script: ChatGPT discovery, mutation adapter, bookmark injection, cleanup overlay
+- popup: launcher/account state
+- extension Vault page: saved-message library/reader
 
-- **background service worker** — privileged coordination, cross-origin cloud requests when needed, auth/session coordination, operation queue ownership.
-- **content script** — ChatGPT compatibility probing, read-only discovery/parsing, injection host for cleanup modal and bookmark action, narrow bridge to background/domain commands.
-- **popup** — lightweight launcher only.
-- **extension-owned Vault page** — saved-conversation library/reader.
+## 4. ChatGPT discovery
 
-Not required in V1:
-- side panel;
-- options page unless settings outgrow the popup/Vault shell.
+Visible sidebar links are not account history. Primary discovery uses same-origin private-web calls behind the adapter boundary:
+1. `GET /api/auth/session` -> access token in memory only
+2. paginated `GET /backend-api/conversations`
 
-## 4. Default module shape
+DOM `/c/` links are fallback-only and never prove end-of-list.
 
-```text
-apps/chatgpt-cleaner/
-├─ entrypoints/
-│  ├─ background.ts
-│  ├─ content.ts
-│  ├─ popup/
-│  └─ vault/
-├─ lib/
-│  ├─ adapters/chatgpt/
-│  │  ├─ compatibility.ts
-│  │  ├─ discovery.ts
-│  │  ├─ snapshot.ts
-│  │  ├─ mutations.ts
-│  │  ├─ dom/
-│  │  └─ private-web/        # only if required
-│  ├─ domain/
-│  │  ├─ cleanup/
-│  │  └─ vault/
-│  ├─ messaging/
-│  ├─ storage/
-│  ├─ supabase/
-│  └─ ui/
-├─ tests/
-│  ├─ fixtures/chatgpt/
-│  ├─ unit/
-│  └─ e2e/
-└─ docs/
-```
+Response schema is validated. Drift -> failed/partial discovery, not fake empty/full history.
 
-Only create modules that become necessary; keep this boundary even if the exact file split changes.
+## 5. Live Archive/Delete adapter
 
-## 5. Runtime architecture
+Current private-web binding, isolated in `lib/adapters/chatgpt/mutations.ts`:
+- Archive: `PATCH /backend-api/conversation/{id}` with `{ "is_archived": true }`
+- Delete: `PATCH /backend-api/conversation/{id}` with `{ "is_visible": false }`
 
-Preferred command flow:
-
-```text
-Popup / injected UI / Vault page
-        ↓ typed validated command
-content or background coordinator
-        ↓ domain operation
-ChatGPT adapter OR Supabase adapter
-        ↓ typed result
-UI state + durable storage
-```
+These are private ChatGPT web contracts, not public stable APIs.
 
 Rules:
-- entrypoints remain thin;
-- page-derived data is untrusted;
-- messages crossing content/background/UI boundaries use typed runtime validation;
-- service-worker globals are never durable state;
-- destructive queues have explicit operation IDs and per-item results.
+- bearer/session data is memory-only and never logged/stored/transmitted to Supabase;
+- request failure stays an item failure;
+- no hidden automatic retry for destructive PATCH requests;
+- Archive never falls through to Delete;
+- Delete is only invoked after extension UI confirmation;
+- capability/request drift must fail visibly;
+- manual live smoke uses intentionally disposable conversations only.
 
-## 6. ChatGPT adapter contract
+## 6. Cleanup domain
 
-ChatGPT-specific behavior must not leak into generic domain/UI code.
+Each list item is keyed by stable source conversation ID.
 
-The adapter exposes capabilities approximately equivalent to:
+Bulk operations:
+- freeze target IDs at execution time;
+- bounded concurrency;
+- per-item pending/running/succeeded/failed/skipped;
+- failed items remain visible/retryable;
+- Archive and Delete are distinct commands;
+- Delete confirmation contains exact target count.
 
-```ts
-interface ChatGptCapabilities {
-  canDiscoverConversations: boolean;
-  canConfirmDiscoveryEnd: boolean;
-  canArchive: boolean;
-  canDelete: boolean;
-  canCaptureConversation: boolean;
-  canLocateAssistantActions: boolean;
-}
-```
+## 7. Cleanup modal
 
-Conceptual operations:
-- probeCompatibility()
-- discoverConversations(cursor?)
-- archiveConversation(id)
-- deleteConversation(id)
-- captureCurrentConversation()
-- locateBookmarkAnchors()
+- centered injected overlay, not side panel;
+- style isolated;
+- search, selection, loaded-count/completeness, per-row and bulk actions;
+- loading/error/partial-failure states explicit;
+- `전체` wording only when end is positively confirmed;
+- Delete confirmation does zero mutation on cancel.
 
-The exact signatures may evolve, but compatibility must be explicit and destructive operations must require positive capability checks.
+## 8. Bookmark injection
 
-## 7. Discovery strategy
+Bookmarks are message-level.
 
-Goal: progressively enumerate as much of the user's ChatGPT conversation history as the current host implementation can reliably expose.
+The adapter locates current ChatGPT turn action clusters from `copy-turn-action-button` / compatible localized turn-copy controls plus legacy fixture fallbacks.
 
-Visible sidebar `a[href^="/c/"]` links are **not** the account list. They are only the currently rendered slice and may be empty when the sidebar is collapsed or virtualized.
-
-Implementation uses:
-
-1. **private-web adapter (primary)** — same-origin `GET /api/auth/session` then paginated `GET /backend-api/conversations` (see `lib/adapters/chatgpt/private-web/EVIDENCE.md`). Token is in-memory only.
-2. **DOM/UI adapter (fallback)** — visible `/c/` links only; never `endConfirmed`.
-
-If a private/undocumented web endpoint is used:
-- document endpoint purpose and assumptions in code/docs;
-- do not persist cookies, session headers, bearer/session tokens, or other ChatGPT credentials;
-- do not transmit those credentials to Supabase or any third party;
-- validate response shape before use;
-- feature-detect and fail closed on mismatch;
-- isolate request construction/parsing under `lib/adapters/chatgpt/private-web/`;
-- keep mutation and discovery separately disableable;
-- add fixtures/tests for known response shapes;
-- never silently fall back from a failed Archive into Delete or vice versa.
-
-Discovery returns explicit completeness state:
-- `loading`;
-- `hasMore`;
-- `endConfirmed`;
-- `unknown/incompatible`.
-
-The UI may say `all conversations` only when `endConfirmed === true`.
-
-## 8. Cleanup domain
-
-Conversation item minimum shape:
-
-```ts
-interface ConversationListItem {
-  sourceId: string;
-  title: string;
-  sourceUrl?: string;
-  updatedAt?: string;
-  archived?: boolean;
-}
-```
-
-Bulk operation requirements:
-- immutable snapshot of target IDs at confirmation time;
-- bounded concurrency (initial default: 2–4, tune from evidence);
-- per-item state: pending/running/succeeded/failed/skipped;
-- abort/stop support where practical;
-- no duplicate mutation for the same operation ID;
-- partial failures remain visible and retryable;
-- deleting requires explicit user confirmation;
-- Archive and Delete queues are distinct operations.
-
-## 9. Injected cleanup modal
-
-- mount through Shadow DOM or equivalent isolated root;
-- modal is centered and overlays ChatGPT content;
-- opening it must not navigate away from the current conversation unless discovery architecture truly requires it;
-- keyboard escape closes only when no irreversible confirmation is open;
-- focus is trapped while modal/confirmation is active;
-- selected state belongs to extension UI, not host DOM classes;
-- row mutations update by stable source ID, never by visual index alone.
-
-## 10. Bookmark action injection
-
-The extension injects one bookmark/save control near each assistant-response action row.
-
-Live ChatGPT no longer exposes `data-testid="assistant-action-row"`. The adapter locates the turn action cluster from `copy-turn-action-button` (or a localized turn-copy control) and its surrounding action group. The obsolete testid remains a legacy/fixture fallback. A locator miss must set `data-ce-bookmark-compat="missing-action-row"` and an internal probe reason; it must not fail silently. See `lib/adapters/chatgpt/dom/EVIDENCE.md`.
+Supported target roles: `user`, `assistant`.
 
 Requirements:
-- injection must be idempotent across SPA navigation and rerender;
-- do not duplicate controls when host DOM mutates;
-- insert after the native more (`...` / 더보기) control and before 출처 when those exist;
-- associate the control with a stable message identifier when available, otherwise use a deterministic capture-time anchor descriptor;
-- clicking the control must not invoke ChatGPT's native buttons;
-- show `saving`/success/failure state owned by the extension (`보관함에 저장` / `저장 중` / `저장됨` / `다시 시도`);
-- success means cloud persistence (or explicit local-only development mode), not merely DOM capture.
+- one bookmark button per compatible turn action row;
+- resolve the exact owning message element before injection;
+- stable message ID when present, deterministic role/ordinal key only as fallback;
+- idempotent across SPA rerender/MutationObserver runs;
+- no event bubbling into native ChatGPT controls;
+- place after More or before Sources when detectable;
+- labels/status: `보관함에 저장`, `저장 중`, `저장됨`, `다시 시도`;
+- if a user/assistant turn has no safe action-row anchor, do not attach to a neighboring message.
 
-## 11. Snapshot capture contract
+## 9. Message capture contract
 
-`captureCurrentConversation()` must return a structured result, not raw page HTML.
+Canonical save API: `captureMessage(document, target)`.
 
-Conceptual shape:
+It captures only the clicked message:
 
 ```ts
-interface ConversationSnapshot {
+interface MessageSnapshot {
   sourceConversationId: string;
   sourceUrl: string;
-  title: string;
-  capturedAt: string;
-  completeness: 'complete' | 'partial';
-  messages: SnapshotMessage[];
-}
-
-interface SnapshotMessage {
+  sourceConversationTitle: string;
   sourceMessageId?: string;
+  sourceMessageKey: string;
   role: 'user' | 'assistant' | 'system' | 'tool' | 'unknown';
-  ordinal: number;
+  messageOrdinal: number;
+  capturedAt: string;
   blocks: SnapshotBlock[];
 }
 ```
 
-V1 block types should cover:
-- paragraph/text;
-- heading;
-- list;
-- quote;
-- code;
-- table;
-- link;
-- unsupported-media placeholder.
+V1 block types:
+- paragraph
+- heading
+- list
+- quote
+- code + language hint
+- table
+- link
+- unsupported-media placeholder
 
-Do not store arbitrary raw host HTML as the canonical snapshot.
+Never save arbitrary executable host HTML. The legacy `captureCurrentConversation()` helper may remain only for migration/fixture compatibility; the runtime bookmark path must not call it.
 
-### Completeness rule
+## 10. Vault identity/storage
 
-The parser must use evidence to decide whether capture is complete enough for V1. If completeness cannot be established:
-- return `partial`;
-- do not show final `Saved` as if the snapshot were complete;
-- do not overwrite an existing complete cloud snapshot with the partial result;
-- surface an actionable error/warning.
+Canonical cloud table: `vault_items`.
 
-## 12. Snapshot identity/update behavior
+Unique identity:
+`(user_id, source_conversation_id, source_message_key)`.
 
-Canonical source key:
-- `(extension_user_id, source_conversation_id)` when a stable source ID exists.
+Three different messages saved from one conversation -> three independent rows. Re-saving the same source message -> upsert same row.
 
-Fallback source identity may use a documented deterministic key only if the source ID is unavailable; that fallback must be marked fragile.
+Legacy `vault_conversations` / `bookmarks` remain untouched for rollback and are not the new runtime write target.
 
-On save:
-1. capture complete current snapshot;
-2. upsert `vault_conversation` by canonical source key;
-3. preserve existing bookmarks;
-4. upsert the clicked response bookmark anchor;
-5. return persisted record/version timestamp;
-6. only then show success.
+Local fallback uses a new storage key separate from legacy whole-conversation records.
 
-No automatic version-history table in V1.
+## 11. Vault reader
 
-## 13. Vault reader
+Vault UI is message-centric:
+- list item role (`질문` / `답변`), preview, source conversation title, timestamp;
+- detail renders only the selected saved message;
+- source ChatGPT link is provenance and may later fail;
+- deleting a Vault item deletes only that saved item;
+- no ChatGPT DOM/CSS dependency for rendering;
+- captured text is rendered through safe nodes and sanitized links.
 
-The Vault page renders only sanitized extension-owned snapshot data.
+## 12. Media semantics
 
-Requirements:
-- no dependency on ChatGPT DOM/CSS to render saved content;
-- safe renderer for snapshot block types;
-- code and links rendered without executing source content;
-- external links require normal browser navigation behavior;
-- source ChatGPT link is optional and may fail after source deletion;
-- bookmark anchors scroll/focus the corresponding saved message;
-- Vault deletion affects only the cloud copy and requires confirmation.
+V1: only media/files inside the selected message may produce safe placeholder/metadata. Do not scan/save media from other turns.
 
-## 14. Auth/cloud
+V1.1: generated image/file binary backup attaches to `vault_item_id` and private object storage. A binary is not considered backed up until persistence succeeds.
 
-Default: Supabase + Google OAuth.
+## 13. Supabase/RLS
 
-Auth/session rules:
-- use extension-safe OAuth redirect flow;
-- never put service-role keys in the extension;
-- only anon/publishable client configuration may be bundled;
-- rely on Supabase Auth user identity + RLS;
-- durable user content is cloud-owned; local storage is cache/settings only;
-- sign-out clears local auth/cache material appropriate to the client SDK.
+`vault_items` is user-scoped:
+- SELECT/INSERT/UPDATE/DELETE only for `auth.uid() = user_id`.
 
-## 15. Local storage
+Auth remains Supabase OAuth PKCE using `chrome.identity.launchWebAuthFlow` + `exchangeCodeForSession`.
 
-Allowed local durable state:
-- theme preference;
-- popup/UI preference;
-- non-sensitive cached Vault metadata if useful;
-- migration/schema version;
-- transient operation recovery metadata if required.
+No service-role key, Google client secret, ChatGPT cookie/token, or private export in repo/client logs.
 
-Do not store ChatGPT session credentials.
+## 14. Failure behavior
 
-## 16. Permissions and host access
+### Discovery
+Schema/network failure -> explicit failed/partial state; DOM fallback may show only visible rows and never claims full history.
 
-See `docs/PERMISSIONS.md`.
+### Archive/Delete
+HTTP/schema/auth failure -> item failed; no success claim; no destructive hidden retry.
 
-No permission may be added only for convenience.
+### Bookmark save
+Capture/persistence failure -> `다시 시도`; do not claim `저장됨`.
 
-## 17. Failure behavior
+### Cloud list
+A cloud list error may fall back to local data only if the UI/backend state does not misrepresent local rows as cloud-synced.
 
-### ChatGPT compatibility mismatch
-- disable affected capability;
-- keep unaffected capability usable when safely separable;
-- destructive actions must not run;
-- display `ChatGPT changed; this feature needs an adapter update`-style failure, not a generic success/failure ambiguity.
+## 15. Permissions
 
-### Network/Supabase failure
-- never claim Vault save success;
-- allow retry;
-- do not delete source data as compensation;
-- preserve prior complete snapshot.
+Minimum permissions only. Current architecture must not add `scripting`, `cookies`, or `<all_urls>` merely for these features. Same-origin ChatGPT content-script requests use the existing host access.
 
-### Partial cleanup failure
-- completed items remain completed;
-- failed items remain selected/visible;
-- show itemized errors;
-- retry only failed target IDs.
+## 16. Acceptance criteria
 
-### Service-worker restart
-- operation state must be reconstructable from durable/transient storage or fail safely;
-- never resume a destructive action blindly if exact operation identity/target state is unknown.
-
-### Permission denial/auth expired
-- show exact recovery action;
-- do not broaden permissions automatically;
-- do not silently fall back to unsafe behavior.
-
-## 18. Security constraints
-
-- no remote executable code;
-- no eval/new Function;
-- no ChatGPT auth/session exfiltration;
-- no Supabase service-role secret in client code;
-- sanitize all captured content before rendering;
-- no raw innerHTML with captured host content;
-- HTTPS only;
-- allowlist cloud endpoint;
-- RLS mandatory before real user snapshot upload.
-
-## 19. Out of scope
-
-See `PRODUCT.md`; especially media binary backup, version history, automatic account-wide Vault backup, and side-panel UI.
-
-## 20. Acceptance criteria
-
-- popup launches ChatGPT, cleanup modal, and Vault page correctly;
-- cleanup modal discovers conversations progressively and represents completeness honestly;
+- signed-in account history loads independently of sidebar visibility;
 - single/bulk Archive works with itemized outcomes;
-- single/bulk Delete requires correct confirmation and has itemized outcomes;
-- incompatible ChatGPT shape blocks destructive actions;
-- bookmark action injection is idempotent;
-- complete V1 snapshot is stored independently of ChatGPT;
-- later source archive/delete does not remove Vault data;
-- same source conversation updates one snapshot and supports multiple bookmark anchors;
-- incomplete capture never overwrites a complete snapshot;
-- Google/Supabase sign-in restores Vault data on another browser environment;
-- all required QA in `QA.md` passes.
+- single/bulk Delete requires defined confirmation and itemized outcomes;
+- real destructive smoke is performed only on disposable targets;
+- assistant answer bookmark saves only that answer;
+- user question bookmark saves only that question when a safe turn action row exists;
+- different messages in one conversation become independent Vault items;
+- same message re-save does not duplicate;
+- code/table/link structures survive message capture;
+- source Archive/Delete does not remove saved Vault items;
+- Vault deletion does not mutate ChatGPT;
+- RLS prevents cross-user Vault access;
+- repository QA + GitHub Actions pass before merge.
