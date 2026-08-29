@@ -5,7 +5,7 @@ alwaysApply: true
 
 For meaningful work, recover repository state before editing:
 - @CURRENT.md and its full active-work table
-- target GitHub Issue and latest valid STATE/OWNER transition
+- target GitHub Issue and latest valid STATE/OWNER/REVIEW_MODE transition
 - @docs/COLLABORATION.md
 - @AGENTS.md
 
@@ -21,6 +21,7 @@ Repository-wide references:
 
 Mandatory behavior:
 - GitHub is the operational collaboration hub; do not use chat history or local scratch state as a substitute for durable task state.
+- ChatGPT is optional. Cursor-only execution is valid when the GitHub task contract is followed.
 - Check all RUNNING tasks for declared write-scope collisions before editing.
 - Preserve the multi-extension monorepo boundary: products live under `apps/<slug>`.
 - Chrome Manifest V3, TypeScript, WXT, pnpm, Vitest, and Playwright are the repository defaults.
@@ -31,5 +32,7 @@ Mandatory behavior:
 - Use the shared design system for extension-owned UI.
 - Run `pnpm verify:repo` and all relevant QA gates before declaring implementation complete.
 - When changing GitHub task state from Cursor, `pnpm agent:check` must pass first.
-- Follow the Issue ownership/state protocol in `docs/COLLABORATION.md`.
+- Follow the Issue ownership/state/review-mode protocol in `docs/COLLABORATION.md`.
+- `REVIEW_MODE: SELF` requires a distinct second review pass; do not treat self-review as skipped review.
+- Unresolved material decisions must move to `DECISION_NEEDED` instead of being guessed.
 - If repository rules conflict with an app-local convenience, repository rules win unless the app SPEC explicitly records an approved exception.
