@@ -1,0 +1,17 @@
+---
+description: Architecture and permission rules for Chrome extension application code.
+globs: ["apps/**/*.{ts,tsx,js,jsx,json,html,css}"]
+alwaysApply: false
+---
+
+Before editing an app, read its `docs/SPEC.md`, `docs/PERMISSIONS.md`, and `docs/QA.md`.
+
+- Keep entrypoints thin; move reusable behavior into `lib/`.
+- Background/service-worker code must survive suspension and reconstruct durable state from storage.
+- Use typed messages with runtime validation at trust boundaries.
+- Keep host-site selectors and undocumented API assumptions under `lib/adapters/<site>/`.
+- Prefer `activeTab` and optional permissions over broad host access.
+- Never add `<all_urls>` for convenience.
+- Any new permission or host permission requires a matching update to `docs/PERMISSIONS.md`.
+- Keep generated output out of source control.
+- Do not introduce a UI framework unless the app complexity justifies it in the SPEC.
