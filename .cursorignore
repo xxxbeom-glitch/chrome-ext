@@ -1,0 +1,34 @@
+# Secrets and credentials
+**/.env
+**/.env.*
+!**/.env.example
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+**/credentials*.json
+**/secrets*.json
+**/auth*.json
+
+# User/session exports and local data
+**/exports/**
+**/private/**
+**/sessions/**
+**/cookies/**
+
+# Dependencies and generated output
+**/node_modules/**
+**/.output/**
+**/dist/**
+**/build/**
+**/coverage/**
+**/test-results/**
+**/playwright-report/**
+**/.wxt/**
+**/.cache/**
+
+# Packaged/binary artifacts
+**/*.zip
+**/*.crx
+**/*.xpi
+**/*.log
