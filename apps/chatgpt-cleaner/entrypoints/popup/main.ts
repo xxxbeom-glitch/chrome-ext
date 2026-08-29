@@ -75,7 +75,7 @@ async function init(): Promise<void> {
   const subtitle = document.createElement("p");
   subtitle.className = "ce-popup__subtitle";
   subtitle.textContent =
-    "정리는 ChatGPT 안에서, 북마크한 대화는 보관함 페이지에서 확인합니다.";
+    "대화방은 ChatGPT에서 정리하고, 저장한 질문과 답변은 북마크 보관함에서 확인합니다.";
 
   const actionStatus = document.createElement("p");
   actionStatus.className = "ce-popup__note";
@@ -111,7 +111,7 @@ async function init(): Promise<void> {
   const vault = document.createElement("button");
   vault.type = "button";
   vault.className = "ce-button ce-button--secondary";
-  vault.textContent = "북마크한 대화";
+  vault.textContent = "북마크 보관함";
   vault.addEventListener("click", () => {
     void (async () => {
       actionStatus.textContent = "보관함을 여는 중…";
