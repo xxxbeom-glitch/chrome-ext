@@ -7,30 +7,76 @@ body {
   color: var(--ce-sys-color-text-primary);
 }
 
-.ce-shell {
+.ce-popup {
   display: grid;
   gap: var(--ce-sys-space-md);
   padding: var(--ce-sys-space-lg);
 }
 
-.ce-shell h1 {
+.ce-popup h1 {
   margin: 0;
   font-size: var(--ce-sys-type-title-md-size);
   line-height: var(--ce-sys-type-title-md-line-height);
   font-weight: var(--ce-sys-type-title-md-weight);
 }
 
-.ce-shell p {
+.ce-popup__subtitle,
+.ce-popup__note {
   margin: 0;
   color: var(--ce-sys-color-text-secondary);
-  font-size: var(--ce-sys-type-body-md-size);
-  line-height: var(--ce-sys-type-body-md-line-height);
-  font-weight: var(--ce-sys-type-body-md-weight);
+  font-size: var(--ce-sys-type-body-sm-size);
+  line-height: var(--ce-sys-type-body-sm-line-height);
 }
 
-.ce-shell__badge {
-  color: var(--ce-sys-color-text-disabled);
-  font-size: var(--ce-sys-type-label-sm-size);
-  line-height: var(--ce-sys-type-label-sm-line-height);
-  font-weight: var(--ce-sys-type-label-sm-weight);
+.ce-popup__actions {
+  display: grid;
+  gap: var(--ce-sys-space-sm);
+}
+
+.ce-button {
+  min-height: var(--ce-comp-button-height-md);
+  padding-inline: var(--ce-comp-button-padding-inline-md);
+  border-radius: var(--ce-comp-button-radius);
+  border: var(--ce-sys-border-width-default) solid transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.ce-button:focus-visible {
+  outline: var(--ce-sys-focus-ring-size) solid var(--ce-sys-color-focus-ring);
+  outline-offset: var(--ce-sys-focus-ring-offset);
+}
+
+.ce-button--primary {
+  background: var(--ce-sys-color-action-primary);
+  color: var(--ce-sys-color-action-primary-text);
+}
+
+.ce-button--secondary {
+  background: var(--ce-sys-color-bg-surface);
+  color: var(--ce-sys-color-text-primary);
+  border-color: var(--ce-sys-color-border-default);
+}
+
+.ce-popup__theme {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ce-sys-space-sm);
+  font-size: var(--ce-sys-type-label-md-size);
+}
+
+.ce-popup__theme select {
+  min-height: var(--ce-comp-input-height-md);
+  border-radius: var(--ce-sys-radius-control);
+  border: var(--ce-sys-border-width-default) solid var(--ce-sys-color-border-default);
+  background: var(--ce-sys-color-bg-surface);
+  color: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
 }

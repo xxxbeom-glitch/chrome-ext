@@ -55,22 +55,27 @@ const test = base.extend<ExtensionFixtures>({
   },
 });
 
-test.describe("Phase 0 extension harness", () => {
-  test("popup shell renders", async ({ context, extensionId }) => {
+test.describe("Phase 0/1 extension harness", () => {
+  test("popup shell renders launcher actions", async ({ context, extensionId }) => {
     const page = await context.newPage();
     await page.goto(`chrome-extension://${extensionId}/popup.html`);
     await expect(page.getByRole("heading", { name: "ChatGPT Cleaner" })).toBeVisible();
-    await expect(page.getByText("Phase 0 · popup")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Open ChatGPT" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Clean up conversations" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Bookmarked conversations" })).toBeVisible();
   });
 
-  test("vault shell renders", async ({ context, extensionId }) => {
+  test("vault shell renders mock reader", async ({ context, extensionId }) => {
     const page = await context.newPage();
     await page.goto(`chrome-extension://${extensionId}/vault.html`);
     await expect(page.getByRole("heading", { name: "Conversation Vault" })).toBeVisible();
-    await expect(page.getByText("Phase 0 · vault")).toBeVisible();
+    await expect(page.getByRole("button", { name: /Keep this conversation/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Keep this conversation" })).toBeVisible();
   });
 
-  test("content script loads only on chatgpt.com", async ({ context }) => {
+  test("content script loads only on chatgpt.com and mounts isolated overlay host", async ({
+    context,
+  }) => {
     const chatgpt = await context.newPage();
     await chatgpt.route("https://chatgpt.com/**", async (route) => {
       await route.fulfill({
@@ -83,6 +88,7 @@ test.describe("Phase 0 extension harness", () => {
     await expect
       .poll(async () => chatgpt.locator("html").getAttribute("data-ce-chatgpt-cleaner"))
       .toBe("loaded");
+    await expect(chatgpt.locator("#ce-chatgpt-cleaner-host")).toHaveCount(1);
 
     const other = await context.newPage();
     await other.route("https://example.com/**", async (route) => {
@@ -94,5 +100,6 @@ test.describe("Phase 0 extension harness", () => {
     });
     await other.goto("https://example.com/");
     await expect(other.locator("html")).not.toHaveAttribute("data-ce-chatgpt-cleaner", "loaded");
+    await expect(other.locator("#ce-chatgpt-cleaner-host")).toHaveCount(0);
   });
 });
