@@ -1,4 +1,4 @@
-import type { ConversationSnapshot } from "../../adapters/chatgpt/types";
+import type { MessageSnapshot } from "../../adapters/chatgpt/types";
 import {
   loadLocalVault,
   persistLocalVault,
@@ -15,15 +15,7 @@ export interface VaultService {
   backend(): Promise<VaultBackend>;
   list(): Promise<VaultRecord[]>;
   get(id: string): Promise<VaultRecord | undefined>;
-  saveSnapshot(input: {
-    snapshot: ConversationSnapshot;
-    anchor: {
-      sourceMessageId?: string;
-      messageOrdinal: number;
-      excerpt: string;
-      anchorKey?: string;
-    };
-  }): Promise<VaultSaveResult & { backend: VaultBackend }>;
+  saveItem(snapshot: MessageSnapshot): Promise<VaultSaveResult & { backend: VaultBackend }>;
   deleteVaultOnly(id: string): Promise<boolean>;
   signOut(): Promise<void>;
 }
@@ -69,20 +61,18 @@ export function createVaultService(deps: VaultServiceDeps = {}): VaultService {
       const records = await this.list();
       return records.find((record) => record.id === id);
     },
-    async saveSnapshot(input) {
+    async saveItem(snapshot) {
       if (await useCloud()) {
-        const result = await cloud.saveSnapshot(input);
+        const result = await cloud.saveItem(snapshot);
         return { ...result, backend: "cloud" as const };
       }
       const local = await loadLocal();
-      const result = local.saveSnapshot(input);
+      const result = local.saveItem(snapshot);
       if (result.ok) await persistLocal(local);
       return { ...result, backend: "local" as const };
     },
     async deleteVaultOnly(id: string) {
-      if (await useCloud()) {
-        return cloud.deleteVaultOnly(id);
-      }
+      if (await useCloud()) return cloud.deleteVaultOnly(id);
       const local = await loadLocal();
       const deleted = local.deleteVaultOnly(id);
       if (deleted) await persistLocal(local);
