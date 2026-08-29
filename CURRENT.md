@@ -16,7 +16,6 @@ Last updated: 2026-08-29
 | Issue | App / scope | State | Owner | Review mode | Branch |
 | --- | --- | --- | --- | --- | --- |
 | #6 | `apps/chatgpt-cleaner` / MVP implementation epic | READY | CURSOR | SELF | parent epic |
-| #7 | `apps/chatgpt-cleaner` / Phase 0 bootstrap | RUNNING | CURSOR | SELF | `feat/chatgpt-cleaner-p0-bootstrap` |
 
 Concurrent active tasks are allowed only when their declared write scopes are disjoint. See `docs/COLLABORATION.md`.
 
@@ -34,17 +33,18 @@ Concurrent active tasks are allowed only when their declared write scopes are di
 - Unresolved material product/policy/privacy/permission/destructive-action decisions move to `DECISION_NEEDED` instead of being guessed.
 - Collaboration foundation Issues #1 and #4 are DONE and closed.
 - ChatGPT Cleaner product definition Issue #5 is DONE and closed.
+- ChatGPT Cleaner Phase 0 bootstrap Issue #7 is DONE and closed; WXT shells/harness are on `main`.
 - ChatGPT Cleaner MVP product/technical/data/permission/QA/execution contracts live under `apps/chatgpt-cleaner/`.
 - Durable MVP decisions are recorded in `docs/decisions/DEC-0002-chatgpt-cleaner-mvp-contract.md`.
 
 ## Next planned product work
 
-1. Finish Phase 0 QA + SELF review, then continue Phase 1–7 automatically under Issue #6.
+1. Cursor creates/claims Phase 1 UI shell task and continues Phase 1–7 automatically under Issue #6.
 2. User is interrupted only for an explicit `DECISION_NEEDED` or external setup `BLOCKED` condition defined by the execution plan.
 
 ## Blockers / decisions needed
 
-- No repository-side blocker for Phase 0.
+- No repository-side blocker for Phase 1.
 - Supabase/Google external project activation may require a later one-time user setup during Phase 5 if Cursor cannot configure it through available tooling. This does not block Phases 0–4.
 - Repository is public. Keep Issues/PRs public-safe; switch the repository to private before storing private operational context.
 - GitHub server-side branch protection/ruleset remains optional hardening; agent/CI rules currently enforce the workflow but do not themselves prevent a direct server push to `main`.
