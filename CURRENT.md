@@ -18,20 +18,21 @@ Last updated: 2026-08-29
 | #6 | `apps/chatgpt-cleaner` / MVP implementation epic | READY | CURSOR | SELF | parent epic |
 | #15 | `apps/chatgpt-cleaner` / live Archive-Delete binding | BLOCKED | USER | USER | n/a |
 | #20 | `apps/chatgpt-cleaner` / Google Auth provider setup | BLOCKED | USER | USER | n/a |
-| #25 | `apps/chatgpt-cleaner` / Phase 7 hardening | RUNNING | CURSOR | SELF | `test/chatgpt-cleaner-p7-hardening` |
 
 Concurrent active tasks are allowed only when their declared write scopes are disjoint. See `docs/COLLABORATION.md`.
 
 ## Current repository baseline
 
-- Phases 0–6 engineering on `main` (Phase 6 via #23/#24).
+- Phases 0–7 engineering complete on `main` (Phase 7 via #25/#26).
 - Auth: Supabase OAuth PKCE only. Env: `WXT_PUBLIC_SUPABASE_*`.
 - Residual / USER blockers: `apps/chatgpt-cleaner/docs/RESIDUAL.md`.
+- Epic #6 stays open until #15/#20 clear or user accepts residual.
 
 ## Next planned product work
 
-1. Finish #25 Phase 7 engineering hardening; leave #15/#20 BLOCKED.
-2. Do not close epic #6 until USER clears #15/#20 or explicitly accepts residual.
+1. USER: complete #20 Google Web OAuth + Supabase redirect allowlist, then Cursor verifies sign-in + cross-profile restore.
+2. USER: complete #15 disposable ChatGPT Archive/Delete notes, then Cursor binds live mutators fail-open only when proven.
+3. After both, close epic #6.
 
 ## Blockers / decisions needed
 
