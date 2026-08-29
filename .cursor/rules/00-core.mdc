@@ -4,8 +4,8 @@ alwaysApply: true
 ---
 
 For meaningful work, recover repository state before editing:
-- @CURRENT.md
-- active GitHub Issue referenced by CURRENT
+- @CURRENT.md and its full active-work table
+- target GitHub Issue and latest valid STATE/OWNER transition
 - @docs/COLLABORATION.md
 - @AGENTS.md
 
@@ -21,6 +21,7 @@ Repository-wide references:
 
 Mandatory behavior:
 - GitHub is the operational collaboration hub; do not use chat history or local scratch state as a substitute for durable task state.
+- Check all RUNNING tasks for declared write-scope collisions before editing.
 - Preserve the multi-extension monorepo boundary: products live under `apps/<slug>`.
 - Chrome Manifest V3, TypeScript, WXT, pnpm, Vitest, and Playwright are the repository defaults.
 - Do not broaden permissions, data collection, external transmission, or product scope without documenting it first.
