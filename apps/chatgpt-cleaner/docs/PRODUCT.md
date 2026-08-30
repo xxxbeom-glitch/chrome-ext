@@ -1,264 +1,111 @@
-# ChatGPT Cleaner + Conversation Vault — Product Definition
+# ChatGPT 대화 정리 — Product Definition
 
-Status: MVP product contract
-Working name: ChatGPT Cleaner + Conversation Vault
+Status: current MVP contract
 
 ## 1. Product purpose
 
-Help the user keep ChatGPT usable at scale by separating two jobs:
+ChatGPT 대화 목록을 한 번에 불러와 여러 대화를 빠르게 **보관(Archive)** 또는 **삭제(Delete)** 할 수 있게 한다.
 
-1. **Cleaner** — quickly archive or delete unwanted ChatGPT conversations.
-2. **Conversation Vault** — preserve selected conversations as independent cloud snapshots that remain available even if the ChatGPT original is later archived or deleted.
+현재 MVP는 이 한 가지 목적만 가진다.
 
-The product is private-first and initially optimized for one user, but data ownership is user-scoped so multi-user support does not require a redesign.
+## 2. In scope
 
-## 2. Product principles
+- ChatGPT 계정 대화 목록 불러오기
+- 검색/선택
+- 단일 보관
+- 다중 보관
+- 단일 삭제
+- 다중 삭제
+- 삭제 전 명시적 확인
+- 항목별 진행/성공/실패 표시
+- 실패 항목만 사용자가 다시 시도 가능
+- 목록 전체 로딩 여부를 과장하지 않는 completeness 표시
 
-- Cleanup must be faster than ChatGPT's one-by-one management flow.
-- Destructive actions must be explicit, scoped, and recoverably reported.
-- Saving to the Vault is never coupled to deleting the ChatGPT original.
-- A saved conversation must remain readable without the original ChatGPT conversation.
-- The extension should feel native to ChatGPT without copying or depending on ChatGPT styling internals.
-- The popup is a launcher; long workflows live in dedicated surfaces.
-- When host compatibility is uncertain, fail closed rather than guessing.
+## 3. Out of scope
 
-## 3. Information architecture
+현재 MVP에서는 아래 기능을 제공하지 않는다.
 
-### A. Chrome action popup
+- 메시지 단위 북마크/저장
+- 전체 대화 스냅샷 저장
+- Conversation Vault / 보관함 페이지
+- 이미지/파일 백업
+- Supabase 클라우드 저장
+- Google 로그인
+- ChatGPT 대화 콘텐츠를 별도 DB에 저장하는 기능
 
-A compact hub with these primary actions:
+해당 기능은 사용자가 별도로 재결정하기 전까지 구현/노출하지 않는다.
 
-- **Open ChatGPT** — focus/open `chatgpt.com`.
-- **Clean up conversations** — open/focus ChatGPT and request the injected cleanup modal.
-- **Bookmarked conversations** — open the extension-owned Vault page.
+## 4. Popup
 
-Secondary area:
-- signed-in account state;
-- sync state;
-- settings/sign out.
+팝업은 가벼운 실행기다.
 
-The popup must not become the main list-management screen.
+노출 기능:
+- **대화방 정리하기**
+- **ChatGPT 열기**
+- 테마 선택
 
-### B. ChatGPT cleanup modal
+보관함/로그인/동기화 UI는 노출하지 않는다.
 
-Centered overlay/modal injected into ChatGPT.
+## 5. Cleanup modal
 
-Required structure:
-- title and close action;
-- search/filter input;
-- loading/discovery state;
-- select-all control for currently loaded results;
-- selected-count summary;
-- scrollable conversation list;
-- checkbox per row;
-- conversation title and optional date/meta;
-- per-row Archive icon/action;
-- per-row Delete icon/action;
-- bulk Archive and Delete actions;
-- operation progress and itemized result/failure state.
+ChatGPT 위에 확장프로그램 소유의 모달을 띄운다.
 
-### C. Inline bookmark action
+필수 요소:
+- 검색
+- 전체 선택
+- 선택 개수
+- 대화 제목/메타
+- 행별 보관/삭제
+- 일괄 보관/삭제
+- 진행 상태
+- 항목별 성공/실패
+- 실패 항목 재시도
 
-Inject one extension-owned bookmark/save action beside the existing assistant-response action row.
+## 6. Archive behavior
 
-Clicking it means:
-1. identify the current source conversation;
-2. capture a complete structured snapshot of the conversation as of that moment;
-3. save/update the cloud snapshot;
-4. add the clicked assistant response as a bookmark anchor;
-5. show success only when persistence is confirmed.
+- 사용자가 선택한 대화 ID만 대상으로 한다.
+- Archive와 Delete는 완전히 별도 동작이다.
+- Archive 실패가 Delete로 대체되어서는 안 된다.
+- 자동 재시도하지 않는다.
 
-### D. Vault page
+## 7. Delete behavior
 
-Extension-owned page opened from the popup.
+- 삭제는 실행 전에 명시적 확인을 요구한다.
+- 다중 삭제는 정확한 대상 개수를 표시한다.
+- 취소 시 네트워크 mutation은 0건이어야 한다.
+- 실패 항목은 실패 상태로 남기고 사용자가 명시적으로 다시 시도한다.
+- 자동 재시도하지 않는다.
 
-V1 capabilities:
-- list saved conversations;
-- search by title/basic text if practical;
-- show saved/updated time and bookmark count;
-- open a saved conversation independently of ChatGPT;
-- jump to bookmark anchors inside the saved snapshot;
-- open the source ChatGPT URL when it still exists;
-- delete the Vault copy with confirmation.
+## 8. ChatGPT integration
 
-## 4. Core user flows
+목록 조회와 보관/삭제는 현재 ChatGPT 웹에서 사용되는 same-origin private-web 계약을 어댑터 내부에 격리한다.
 
-### Flow 1 — Bulk cleanup
+현재 mutation 계약:
+- Archive: `PATCH /backend-api/conversation/{id}` + `{ "is_archived": true }`
+- Delete: `PATCH /backend-api/conversation/{id}` + `{ "is_visible": false }`
 
-1. User chooses `Clean up conversations` from the popup.
-2. Extension opens/focuses ChatGPT and displays the cleanup modal.
-3. Extension discovers conversations progressively.
-4. User searches and selects rows.
-5. User chooses Archive or Delete.
-6. Archive executes without irreversible confirmation.
-7. Delete shows exact target count and requires explicit confirmation.
-8. Operation runs with bounded concurrency.
-9. Successes disappear/update; failures remain visible and selected for retry.
+이 계약은 공개 API가 아니므로 변경될 수 있다. 요청/응답이 예상과 다르면 성공으로 추정하지 않고 실패를 그대로 표시한다.
 
-### Flow 2 — Single-row cleanup
+ChatGPT 세션 토큰은 메모리에서만 사용하고 저장/로그/외부 전송하지 않는다.
 
-1. User clicks Archive or Delete at the right edge of a conversation row.
-2. Archive executes directly with progress feedback.
-3. Delete requires confirmation naming or otherwise clearly identifying the target.
-4. Failure is reported on that row.
+## 9. Permissions
 
-### Flow 3 — Save/bookmark a conversation
+현재 MVP에 필요한 권한만 사용한다.
 
-1. User reads a ChatGPT assistant response.
-2. User clicks the injected bookmark/save icon below that response.
-3. Extension validates that the whole current conversation can be captured completely enough for the V1 snapshot contract.
-4. Extension saves/updates the conversation snapshot in the Vault.
-5. The clicked response becomes a bookmark anchor.
-6. Repeated bookmarks in the same source conversation reuse the same snapshot record and add anchors.
+- `storage` — 테마/비민감 UI 설정
+- `https://chatgpt.com/*` — ChatGPT 페이지 및 same-origin cleanup 요청
 
-### Flow 4 — Re-save later
+`identity`, Supabase host permission 등 Vault/로그인용 권한은 현재 MVP에서 제거한다.
 
-If the same source conversation continues after an earlier save:
-- a new bookmark triggers a fresh complete capture;
-- the current Vault snapshot is updated to the newer complete state;
-- existing bookmark anchors remain;
-- the new anchor is added;
-- an incomplete capture must never overwrite the last complete snapshot.
+## 10. Acceptance criteria
 
-### Flow 5 — Original deleted later
-
-- Deleting/archiving a ChatGPT original has no effect on the Vault record.
-- Vault content remains readable after source deletion.
-- The original-source link may become unavailable; this must not break Vault rendering.
-
-### Flow 6 — New PC
-
-1. Install extension.
-2. Sign into the extension account.
-3. Vault data syncs from cloud.
-4. Saved conversations are readable without ChatGPT login.
-5. ChatGPT login is only needed to create new snapshots or manipulate source conversations.
-
-## 5. Cleaner behavior policy
-
-### Archive
-- single Archive: no confirmation;
-- bulk Archive: no confirmation, but show selected count before execution;
-- report partial failures explicitly.
-
-### Delete
-- single Delete: explicit confirmation;
-- bulk Delete: explicit confirmation including exact target count;
-- no hidden retry that could duplicate/desynchronize effects;
-- no `Save then automatically delete` workflow in V1.
-
-### Discovery completeness
-
-Product goal: manage the user's complete ChatGPT conversation history when the available adapter can enumerate it reliably.
-
-The UI must distinguish:
-- `loading more`;
-- `N conversations discovered`;
-- `end of list confirmed`.
-
-Never label a selection as `all conversations` unless the adapter has positively reached the end of the available account list. Otherwise use wording such as `all loaded conversations`.
-
-## 6. Vault snapshot semantics
-
-One source ChatGPT conversation maps to one current Vault snapshot per extension user.
-
-### V1 — text-first snapshot
-
-V1 snapshot content:
-- user messages;
-- assistant messages;
-- text/paragraph structure;
-- Markdown semantics that can be reconstructed safely;
-- headings/lists/quotes when detectable;
-- code blocks and language hint when detectable;
-- tables represented structurally or losslessly enough to render;
-- links and visible labels;
-- conversation title;
-- source conversation identifier when available;
-- source URL;
-- saved/updated timestamps;
-- ordered message positions;
-- bookmark anchors;
-- safe metadata/placeholders for visible media or files when detectable.
-
-Out of V1 snapshot scope:
-- uploaded file binaries;
-- generated image binaries;
-- generated downloadable file binaries;
-- voice/audio;
-- Canvas/artifact application state;
-- third-party tool interactive widgets;
-- exact pixel-perfect reproduction of ChatGPT UI.
-
-If excluded media is visible, preserve a safe textual placeholder/metadata when practical rather than pretending the binary was archived. V1 `complete` means complete enough for the V1 text-first contract; it must not imply that media/file binaries were backed up.
-
-### V1.1 — generated media/file backup
-
-After the core MVP is stable, add binary backup for ChatGPT-generated outputs:
-- generated images;
-- generated downloadable files such as PDF, ZIP, DOCX, CSV, XLSX, PPTX, and similar outputs when the source is safely retrievable;
-- store durable copies in extension-owned cloud storage, with Supabase Storage as the default target;
-- keep file metadata in the Vault snapshot and/or a dedicated media record so the Vault remains readable if the original ChatGPT conversation is later deleted;
-- do not depend on expiring ChatGPT download URLs as the durable copy;
-- never claim media backup success until the binary has been persisted successfully.
-
-Media capture follows the same whole-conversation snapshot model as text: when a bookmark triggers a fresh snapshot, supported generated media/files visible in that conversation are eligible for backup. It is not limited only to files attached to the exact assistant response whose bookmark icon was clicked.
-
-### V2 — optional uploaded-source backup
-
-A later version may optionally back up user-uploaded source files. This must be opt-in and quota-aware because uploaded originals can be large, sensitive, or redundant with files the user already owns elsewhere.
-
-## 7. Duplicate/update policy
-
-- Same source conversation + new bookmark: update the current complete snapshot and add/reuse the bookmark anchor.
-- Same message bookmarked again: do not create duplicate anchors by default.
-- Snapshot version history is out of V1.
-- A future versioning feature may be added without changing the source-conversation identity model.
-- When V1.1 media backup exists, repeated snapshots should reuse already-persisted identical media where practical instead of uploading duplicate binaries.
-
-## 8. Auth and cloud default
-
-Default backend: **Supabase**.
-Default sign-in: **Google OAuth through Supabase Auth**.
-
-Reasoning:
-- user-scoped relational data;
-- Row Level Security;
-- JSONB snapshot storage;
-- future search/tag relationships;
-- straightforward cross-device sync.
-
-If external credentials/project setup are unavailable during implementation, Cursor must finish all code/schema/setup instructions that can be completed locally, then create a precise `BLOCKED` or `DECISION_NEEDED` handoff instead of inventing credentials.
-
-## 9. Visual direction
-
-- Use shared `@chrome-ext/design-system`.
-- Pretendard Variable.
-- Light/dark/system support.
-- Compact, neutral productivity UI.
-- Avoid excessive rounding, gradients, decorative effects, or visual mimicry that depends on ChatGPT CSS.
-- Injected UI must be style-isolated.
-
-## 10. Out of scope for MVP
-
-- Safari/Firefox support.
-- Mobile support.
-- automatic full-account Vault backup without user action.
-- automatic deletion after Vault save.
-- media/file binary backup (planned for V1.1 as defined above).
-- snapshot version history.
-- AI summarization/tag generation.
-- sharing/public links.
-- team/multi-user collaboration.
-- restoring a deleted Vault snapshot back into ChatGPT.
-- changing ChatGPT account settings.
-
-## 11. MVP success criteria
-
-The MVP is successful when the user can:
-1. open one cleanup modal and safely archive/delete multiple ChatGPT conversations;
-2. save a complete-enough V1 text-first conversation snapshot from an inline response action;
-3. see safe placeholders/metadata for unsupported media instead of a false claim that media was archived;
-4. later delete the ChatGPT original while the V1 Vault copy remains readable for supported text/structured content;
-5. sign in on another Chrome environment and recover the Vault data;
-6. use the system without silent destructive failures or false `saved`/`all loaded` claims.
+- 실제 계정 대화 목록이 로드된다.
+- 단일/다중 Archive가 정확한 대상에만 적용된다.
+- 단일/다중 Delete가 확인 후 정확한 대상에만 적용된다.
+- 취소된 Delete는 mutation을 발생시키지 않는다.
+- 부분 실패가 성공으로 숨겨지지 않는다.
+- Archive가 Delete로 fall-through 하지 않는다.
+- destructive PATCH 자동 재시도가 없다.
+- 팝업/ChatGPT 페이지 어디에도 북마크/Vault/Google 로그인 UI가 노출되지 않는다.
+- 빌드된 manifest에 `identity`/Supabase host permission이 없다.
+- 저장된 ChatGPT 메시지/대화 콘텐츠가 별도 Vault DB로 전송되지 않는다.
