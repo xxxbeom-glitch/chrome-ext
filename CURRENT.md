@@ -1,6 +1,6 @@
 # CURRENT
 
-Last updated: 2026-08-29
+Last updated: 2026-08-30
 
 ## Repository state
 
@@ -15,30 +15,35 @@ Last updated: 2026-08-29
 
 | Issue | App / scope | State | Owner | Review mode | Branch |
 | --- | --- | --- | --- | --- | --- |
-| #6 | `apps/chatgpt-cleaner` / MVP implementation epic | READY | CURSOR | SELF | parent epic |
-| #15 | `apps/chatgpt-cleaner` / live Archive-Delete binding | BLOCKED | USER | USER | n/a |
-| #20 | `apps/chatgpt-cleaner` / Google Auth provider setup | BLOCKED | USER | USER | n/a |
+| #6 | `apps/chatgpt-cleaner` / cleanup-only MVP epic | READY | CURSOR | SELF | parent epic |
+| #15 | `apps/chatgpt-cleaner` / live Archive-Delete binding | RUNNING | CHATGPT | USER | `feat/cleanup-only-live-mutations` |
 
 Concurrent active tasks are allowed only when their declared write scopes are disjoint. See `docs/COLLABORATION.md`.
 
 ## Current repository baseline
 
-- Phases 0–7 engineering complete on `main`.
-- User-facing UI copy: Korean (no i18n framework).
-- Cleanup overlay discovers account history via same-origin ChatGPT list API (#31/#33); sidebar scrape is fallback only.
-- Auth: Supabase OAuth PKCE only. Env: `WXT_PUBLIC_SUPABASE_*`.
-- Residual / USER blockers: `apps/chatgpt-cleaner/docs/RESIDUAL.md`.
+- Current product scope is **conversation-list cleanup only**.
+- The extension lists the signed-in user's ChatGPT conversations and lets the user select items for **보관** or **삭제**.
+- Message-level bookmarks, whole-conversation Vault snapshots, generated-media backup, Google login and Supabase cloud sync are not part of the current MVP.
+- Popup exposes only `대화방 정리하기`, `ChatGPT 열기`, and theme selection.
+- Cleanup discovery uses same-origin ChatGPT account-history pagination; sidebar scraping remains fallback-only.
+- Live Archive/Delete is isolated behind the ChatGPT private-web mutation adapter.
+- Delete requires the existing explicit confirmation UI. Failed destructive requests are never automatically retried.
 
 ## Next planned product work
 
-1. USER: signed-in discovery smoke (sidebar collapsed + home).
-2. USER: #20 Google OAuth setup; #15 live Archive/Delete.
+1. Automated: repository policy, lint, typecheck, unit, production build, extension E2E.
+2. USER: rebuild/reload the cleanup-only extension.
+3. USER: verify the conversation list loads.
+4. USER: use one disposable conversation for Archive smoke.
+5. USER: use a separate disposable conversation for Delete smoke with explicit confirmation.
 
 ## Blockers / decisions needed
 
-- **#15 BLOCKED (USER):** live ChatGPT Archive/Delete binding.
-- **#20 BLOCKED (USER):** Google Web OAuth client + Supabase redirect allowlist per `docs/SUPABASE_SETUP.md` (PKCE contract).
-- Repository is public; keep Issues/PRs public-safe.
+- **#15:** implementation can be automated, but real Archive/Delete confirmation still requires disposable conversations in the signed-in USER environment.
+- Private ChatGPT web endpoints may drift; failures must remain visible and must never fall through from Archive to Delete.
+- Repository is public; never commit private chats, screenshots, tokens, cookies, exports, or secrets.
+- Vault/message-saving work (#20, #32, #36) is intentionally closed/not planned unless the USER explicitly reintroduces it later.
 
 ## Recovery rule
 

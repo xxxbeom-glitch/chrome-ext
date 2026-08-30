@@ -1,50 +1,40 @@
-# ChatGPT Cleaner + Conversation Vault — Permissions Review
+# ChatGPT 대화 정리 — Permissions Review
 
 ## Effective permission table
 
-| Permission / host | User-visible feature | Why narrower access is insufficient | Optional? |
+| Permission / host | User-visible feature | Why needed | Optional? |
 |---|---|---|---|
-| `storage` | persist theme/settings, safe operation recovery metadata, client cache, local Vault | extension state must survive popup/service-worker lifecycle | No |
-| `identity` | Google OAuth PKCE via `chrome.identity.launchWebAuthFlow` + Supabase `exchangeCodeForSession` | Extension-safe OAuth callback; do not use `signInWithIdToken` in this app | No (chosen auth implementation) |
-| `https://chatgpt.com/*` | inject cleanup modal/bookmark action; discover/capture/mutate ChatGPT conversations | the product must operate continuously on ChatGPT, not only after one toolbar click | No |
-| `https://sgdoskwhwenyugkljzyk.supabase.co/*` | save/read synced Vault snapshots and Auth API | cloud sync requires cross-origin API access from extension context; exact project host only | No after cloud sync enabled |
+| `storage` | 테마 등 비민감 UI 설정 유지 | popup/service-worker lifecycle 이후에도 설정 유지 | No |
+| `https://chatgpt.com/*` | cleanup modal, 대화 목록 discovery, Archive/Delete | 제품의 단일 기능이 ChatGPT에서 동작해야 함 | No |
 
-## Explicitly not requested by default
+## Explicitly not requested
 
-- `<all_urls>` — forbidden.
-- `tabs` — do not request merely to open/focus a tab; add only if implementation proves a specific required API/property needs it.
-- `scripting` — do not request if static WXT/content-script registration can satisfy injection.
-- `webRequest` / `webRequestBlocking` — not part of the product contract.
-- `cookies` — forbidden for convenience; ChatGPT cookies/session material must not be read or stored as a general extension capability.
-- `history`, `downloads`, `clipboardRead`, `clipboardWrite` — no V1 requirement.
-- `*.supabase.co` wildcard — forbidden; only the configured project host is allowlisted.
+- `identity` — 현재 Google 로그인/Vault 없음.
+- Supabase host permission — 현재 클라우드 저장/동기화 없음.
+- `<all_urls>` — 금지.
+- `tabs` — 현재 host permission + 기본 tabs API 사용으로 충분하면 요청하지 않음.
+- `scripting` — 정적 WXT content-script 등록으로 충분.
+- `webRequest` / `webRequestBlocking` — 범위 밖.
+- `cookies` — ChatGPT 쿠키/세션을 일반 확장 권한으로 읽거나 저장하지 않음.
+- `history`, `downloads`, `clipboardRead`, `clipboardWrite` — 현재 요구 없음.
 
 ## ChatGPT host-access constraints
 
-Host access exists only to deliver the explicit product features:
-- cleanup list/discovery (including same-origin ChatGPT history requests the page already makes);
-- Archive/Delete initiated by the user;
-- injected bookmark action;
-- current-conversation snapshot capture.
+Host access는 아래 기능에만 사용한다.
+- 계정 대화 목록 discovery
+- 사용자가 실행한 Archive
+- 사용자가 확인한 Delete
 
-It must not be used for background surveillance, unrelated page scraping, advertising, or collection outside the stated product flow.
+메시지 북마크, 대화 스냅샷 저장, 광고/백그라운드 감시, 별도 데이터 수집에는 사용하지 않는다.
 
-If an undocumented ChatGPT private-web endpoint is required, use the existing `chatgpt.com` host boundary when technically possible. Do not broaden host permissions merely to simplify reverse engineering.
+Private-web endpoint를 사용하더라도 ChatGPT access token은 메모리에서만 사용하며 저장/로그/제3자 전송하지 않는다.
 
-## Supabase constraints
+## Review questions for permission changes
 
-- only the configured project host may be allowlisted (`https://sgdoskwhwenyugkljzyk.supabase.co/*`);
-- never allowlist `*.supabase.co` unless a concrete technical requirement is proven and documented;
-- no service-role key in the client;
-- cloud writes require authenticated user context and RLS.
+- 더 좁은 권한으로 가능한가?
+- 실제 shipping code가 지금 사용하는 권한인가?
+- cleanup-only 단일 목적을 벗어나는가?
+- 새 Chrome 설치 경고를 만드는가?
+- `PRODUCT.md`, `SPEC.md`, privacy/data behavior와 일치하는가?
 
-## Review questions for every permission change
-
-- Can a narrower permission or host pattern satisfy the feature?
-- Is the permission exercised by shipped code now?
-- Does the change expose more ChatGPT/account data than the SPEC requires?
-- Does the change create a new Chrome install warning?
-- Is it reflected in `PRODUCT.md`, `SPEC.md`, and privacy/data behavior?
-- Does it require `DECISION_NEEDED` under app `AGENTS.md`?
-
-Any undocumented permission is a blocker. Cursor must not expand permissions during a routine SELF-reviewed implementation task without first updating this document and, when material, asking for user decision.
+현재 manifest에 `identity` 또는 Supabase host permission이 다시 추가되면 명시적 USER 결정 없이는 blocker다.

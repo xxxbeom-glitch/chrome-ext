@@ -16,19 +16,19 @@ describe("safeExternalHref", () => {
 });
 
 describe("manifest / network destination audit", () => {
-  it("keeps permissions aligned with PERMISSIONS.md", () => {
+  it("keeps permissions aligned with cleanup-only PERMISSIONS.md", () => {
     const config = readFileSync(resolve(APP_ROOT, "wxt.config.ts"), "utf8");
-    expect(config).toContain('permissions: ["storage", "identity"]');
-    expect(config).toContain("https://chatgpt.com/*");
-    expect(config).toContain("https://sgdoskwhwenyugkljzyk.supabase.co/*");
+    expect(config).toContain('permissions: ["storage"]');
+    expect(config).toContain('host_permissions: ["https://chatgpt.com/*"]');
+    expect(config).not.toContain('"identity"');
+    expect(config).not.toContain("supabase.co");
     const forbiddenHost = ["<", "all_urls", ">"].join("");
     expect(config).not.toContain(forbiddenHost);
-    expect(config).not.toContain("*.supabase.co");
     expect(config).not.toContain("webRequest");
     expect(config).not.toContain('"cookies"');
   });
 
-  it("does not ship service-role wording in app source", () => {
+  it("legacy Supabase prototype source still contains no service-role secret pattern", () => {
     const auth = readFileSync(resolve(APP_ROOT, "lib/supabase/auth.ts"), "utf8");
     const client = readFileSync(resolve(APP_ROOT, "lib/supabase/client.ts"), "utf8");
     const config = readFileSync(resolve(APP_ROOT, "lib/supabase/config.ts"), "utf8");

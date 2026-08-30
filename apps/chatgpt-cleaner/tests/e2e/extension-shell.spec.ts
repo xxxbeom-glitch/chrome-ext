@@ -3,7 +3,6 @@ import { existsSync } from "node:fs";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import { TWO_ASSISTANT_ANSWERS_FIXTURE } from "../fixtures/chatgpt/pages";
 
 const extensionPath = resolve(import.meta.dirname, "../../.output/chrome-mv3");
 
@@ -56,28 +55,19 @@ const test = base.extend<ExtensionFixtures>({
   },
 });
 
-test.describe("Phase 0/1 extension harness", () => {
-  test("popup shell renders launcher actions", async ({ context, extensionId }) => {
+test.describe("cleanup-only extension harness", () => {
+  test("popup exposes only ChatGPT cleanup actions", async ({ context, extensionId }) => {
     const page = await context.newPage();
     await page.goto(`chrome-extension://${extensionId}/popup.html`);
+
     await expect(page.getByRole("heading", { name: "ChatGPT 대화 정리" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "ChatGPT 열기" })).toBeVisible();
     await expect(page.getByRole("button", { name: "대화방 정리하기" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "북마크한 대화" })).toBeVisible();
-    await expect(page.getByRole("button", { name: /클라우드 설정 필요|Google로 로그인|로그아웃/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: "ChatGPT 열기" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "북마크한 대화" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /Google로 로그인|로그아웃|클라우드 설정 필요/ })).toHaveCount(0);
   });
 
-  test("vault shell renders local vault empty or reader chrome", async ({ context, extensionId }) => {
-    const page = await context.newPage();
-    await page.goto(`chrome-extension://${extensionId}/vault.html`);
-    await expect(page.getByRole("heading", { name: "대화 보관함" })).toBeVisible();
-    await expect(
-      page.getByText("팝업에서 로그인하면 클라우드와 동기화됩니다", { exact: false }),
-    ).toBeVisible();
-    await expect(page.getByText("로컬 보관함에 저장된 대화가 없습니다", { exact: false })).toBeVisible();
-  });
-
-  test("content script loads only on chatgpt.com and mounts isolated overlay host", async ({
+  test("content script loads only on chatgpt.com and mounts isolated cleanup host", async ({
     context,
   }) => {
     const chatgpt = await context.newPage();
@@ -89,11 +79,12 @@ test.describe("Phase 0/1 extension harness", () => {
       });
     });
     await chatgpt.goto("https://chatgpt.com/");
+
     await expect
       .poll(async () => chatgpt.locator("html").getAttribute("data-ce-chatgpt-cleaner"))
       .toBe("loaded");
     await expect(chatgpt.locator("#ce-chatgpt-cleaner-host")).toHaveCount(1);
-    await expect(chatgpt.locator("html")).toHaveAttribute("data-ce-bookmark-compat", "missing-action-row");
+    await expect(chatgpt.locator("[data-ce-bookmark-control='true']")).toHaveCount(0);
 
     const other = await context.newPage();
     await other.route("https://example.com/**", async (route) => {
@@ -106,63 +97,5 @@ test.describe("Phase 0/1 extension harness", () => {
     await other.goto("https://example.com/");
     await expect(other.locator("html")).not.toHaveAttribute("data-ce-chatgpt-cleaner", "loaded");
     await expect(other.locator("#ce-chatgpt-cleaner-host")).toHaveCount(0);
-  });
-
-  test("injects one bookmark icon per current ChatGPT action row", async ({ context }) => {
-    const chatgpt = await context.newPage();
-    await chatgpt.route("https://chatgpt.com/**", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "text/html; charset=utf-8",
-        body: TWO_ASSISTANT_ANSWERS_FIXTURE,
-      });
-    });
-    await chatgpt.goto("https://chatgpt.com/c/abc-111");
-
-    await expect
-      .poll(async () => chatgpt.locator("html").getAttribute("data-ce-chatgpt-cleaner"))
-      .toBe("loaded");
-    await expect(chatgpt.locator("html")).toHaveAttribute("data-ce-bookmark-compat", "ok");
-    await expect(chatgpt.locator("[data-ce-bookmark-control='true']")).toHaveCount(2);
-
-    const firstRow = chatgpt.locator("[data-turn='assistant']").first().locator("[role='group']");
-    await expect(firstRow.locator("[data-ce-bookmark-control='true']")).toHaveCount(1);
-    await expect(firstRow.locator("button[aria-label='보관함에 저장']")).toBeVisible();
-
-    const order = await firstRow.evaluate((row) => {
-      const children = Array.from(row.children);
-      return {
-        more: children.findIndex((child) => child.getAttribute("aria-label") === "더보기"),
-        bookmark: children.findIndex(
-          (child) => child.getAttribute("data-ce-bookmark-control") === "true",
-        ),
-        sources: children.findIndex((child) => child.getAttribute("aria-label") === "출처"),
-      };
-    });
-    expect(order.more).toBeGreaterThanOrEqual(0);
-    expect(order.sources).toBeGreaterThan(order.more);
-    expect(order.bookmark).toBeGreaterThan(order.more);
-    expect(order.bookmark).toBeLessThan(order.sources);
-
-    await chatgpt.evaluate(() => {
-      const main = document.body;
-      const turn = document.createElement("article");
-      turn.setAttribute("data-testid", "conversation-turn-5");
-      turn.setAttribute("data-turn", "assistant");
-      turn.innerHTML = `
-        <div data-message-author-role="assistant" data-message-id="a3">
-          <div class="markdown"><p>Third answer</p></div>
-        </div>
-        <div role="group" aria-label="Message actions">
-          <button type="button" data-testid="copy-turn-action-button" aria-label="복사">복사</button>
-          <button type="button" aria-label="더보기">...</button>
-          <button type="button" aria-label="출처">출처</button>
-        </div>
-      `;
-      main.append(turn);
-    });
-
-    await expect(chatgpt.locator("[data-ce-bookmark-control='true']")).toHaveCount(3);
-    await expect(chatgpt.locator("[data-turn='assistant']").last().locator("[data-ce-bookmark-control='true']")).toHaveCount(1);
   });
 });

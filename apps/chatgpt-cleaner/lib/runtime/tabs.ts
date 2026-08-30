@@ -36,17 +36,11 @@ export function pickChatgptTab(
   const anyActive = withIds.find((tab) => tab.active);
   if (anyActive) return anyActive;
 
-  return [...withIds].sort(
-    (a, b) => (b.lastAccessed ?? 0) - (a.lastAccessed ?? 0),
-  )[0];
+  return [...withIds].sort((a, b) => (b.lastAccessed ?? 0) - (a.lastAccessed ?? 0))[0];
 }
 
 export function isCleanupOpenedResponse(value: unknown): boolean {
-  return (
-    isExtensionMessage(value) &&
-    value.type === "cleanup.status" &&
-    value.open === true
-  );
+  return isExtensionMessage(value) && value.type === "cleanup.status" && value.open === true;
 }
 
 export function createCleanupOpenMessage() {
@@ -124,11 +118,6 @@ export async function focusOrOpenChatgptTab(): Promise<{ tabId: number; created:
   return { tabId: created.id, created: true };
 }
 
-export async function openVaultTab(): Promise<void> {
-  const url = browser.runtime.getURL("/vault.html");
-  await browser.tabs.create({ url, active: true });
-}
-
 export interface OpenCleanupDeps {
   focusOrOpen: () => Promise<{ tabId: number; created: boolean }>;
   getTab: (tabId: number) => Promise<TabLike>;
@@ -136,9 +125,7 @@ export interface OpenCleanupDeps {
   reloadTab: (tabId: number) => Promise<void>;
   sendCleanupOpen: (tabId: number) => Promise<unknown>;
   sleep: (ms: number) => Promise<void>;
-  /** Quick probes before deciding content script is missing. */
   initialPollAttempts: number;
-  /** Probes after reload while content script injects. */
   recoveryPollAttempts: number;
   pollIntervalMs: number;
 }
@@ -176,10 +163,6 @@ async function pollCleanupOpen(
   return false;
 }
 
-/**
- * Focus/open ChatGPT and open the cleanup overlay.
- * If the content script is missing (e.g. after extension reload), reload the tab and retry.
- */
 export async function openCleanupOverlayOnChatgpt(
   deps: OpenCleanupDeps = createDefaultOpenCleanupDeps(),
 ): Promise<void> {
