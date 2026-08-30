@@ -5,8 +5,8 @@ This file supplements the repository root `AGENTS.md`. Root security, permission
 ## Product identity
 
 - App slug: `chatgpt-cleaner`
-- Working product name: ChatGPT Cleaner + Conversation Vault
-- Single purpose: help the user clean up ChatGPT conversations while preserving selected conversations as user-owned cloud snapshots.
+- Working product name: ChatGPT 대화 정리
+- Single purpose: load the user's ChatGPT conversation list and let the user Archive or Delete selected conversations.
 - Target host: `https://chatgpt.com/*`
 
 ## Mandatory context
@@ -25,41 +25,59 @@ Before changing this app, read in order:
 
 ## Fixed product boundaries
 
-- The Chrome action popup is a lightweight hub, not the primary conversation-management workspace.
+- Current MVP is **cleanup-only**.
 - Conversation cleanup appears as a centered injected overlay/modal inside ChatGPT. Do not replace it with a Chrome side panel.
 - The cleanup list supports checkbox selection, per-row Archive/Delete, bulk Archive/Delete, progress, and itemized failures.
-- Archive does not require an irreversible confirmation. Delete does.
-- A bookmark control is injected near the assistant-response action row.
-- Bookmarking saves or updates an independent cloud snapshot of the whole current conversation and records the selected response as an anchor.
-- Deleting or archiving the original ChatGPT conversation must not delete the Vault snapshot.
-- V1 snapshot scope is text, Markdown structure, code blocks, tables, and links. Uploaded/generated media binaries are out of scope unless a later decision changes this.
-- The same source conversation maps to one current snapshot by default; additional bookmarks add anchors and a later valid save updates the snapshot.
-- Never overwrite a known-complete snapshot with an incomplete capture.
+- Archive does not require irreversible confirmation. Delete does.
+- Delete confirmation must identify the target or exact bulk target count.
+- Archive and Delete are separate operations. Never fall through from one to the other.
+- Destructive PATCH requests are never automatically retried.
+- The popup is a lightweight launcher for `대화방 정리하기`, `ChatGPT 열기`, and theme only.
+
+## Explicitly out of scope until a new USER decision
+
+Do not expose, implement, or re-enable any of the following as routine work:
+
+- message-level bookmark/save controls
+- whole-conversation snapshot capture
+- Conversation Vault / saved conversation page
+- Supabase cloud sync
+- Google login/auth UI
+- generated/uploaded media backup
+- storing ChatGPT message/conversation bodies in an extension-owned backend
+
+Legacy prototype files/migrations may remain for historical rollback, but they are not current runtime/product requirements.
 
 ## Architecture boundaries
 
-- Put all ChatGPT-specific selectors, DOM parsing, private-web assumptions, and mutations under `lib/adapters/chatgpt/`.
-- Keep injected content-script entrypoints thin.
-- Use Shadow DOM or an equivalent strong isolation boundary for injected extension UI.
+- Put ChatGPT-specific discovery/private-web assumptions/mutations under `lib/adapters/chatgpt/`.
+- Keep content/background entrypoints thin.
+- Use Shadow DOM or equivalent strong isolation for the cleanup UI.
 - Use `@chrome-ext/design-system` and Pretendard for extension-owned UI.
-- Treat ChatGPT DOM/API shape as untrusted and version-fragile.
-- Destructive operations fail closed when compatibility cannot be proven.
-- Undocumented/private ChatGPT web endpoints may be investigated and used only when necessary to satisfy the product contract; isolate them behind an adapter, document the dependency, never persist/exfiltrate ChatGPT session secrets, and provide compatibility failure behavior.
-- Do not auto-delete a ChatGPT conversation after saving it to the Vault.
+- Treat ChatGPT private-web contracts as untrusted and version-fragile.
+- ChatGPT session/access tokens are memory-only: never persist, log, commit, or transmit them to Supabase/third parties.
+- Unknown endpoint/schema behavior must fail visibly rather than guess.
+
+## Permission boundary
+
+Current shipping manifest should require only:
+- `storage`
+- `https://chatgpt.com/*`
+
+Do not add `identity`, Supabase host permissions, broad host permissions, cookies, or other permissions without a new explicit USER decision and matching docs update.
 
 ## Decision rule
 
 Routine implementation is `REVIEW_MODE: SELF`.
 
 Move to `DECISION_NEEDED / OWNER: USER` instead of guessing if implementation would materially change:
-- the UI surfaces above;
-- snapshot semantics;
-- V1 content scope;
-- permission/privacy behavior;
-- destructive-action confirmation semantics;
-- cloud provider/auth model;
-- use of a substantially broader ChatGPT data-access mechanism.
+- cleanup UI surface
+- Archive/Delete semantics
+- destructive confirmation behavior
+- ChatGPT data-access mechanism
+- permissions/privacy behavior
+- or reintroduce any Vault/bookmark/cloud feature.
 
 ## Completion
 
-Follow `docs/EXECUTION_PLAN.md`. Each phase must have GitHub evidence, required QA, and a separate SELF-review pass before DONE.
+Follow `docs/QA.md`. Automated gates must be green, and real destructive behavior requires USER smoke with intentionally disposable conversations before DONE.
