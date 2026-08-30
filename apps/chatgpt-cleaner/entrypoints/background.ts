@@ -1,9 +1,5 @@
 import { isExtensionMessage, MESSAGE_VERSION } from "../lib/messaging/schema";
-import {
-  focusOrOpenChatgptTab,
-  openCleanupOverlayOnChatgpt,
-  openVaultTab,
-} from "../lib/runtime/tabs";
+import { focusOrOpenChatgptTab, openCleanupOverlayOnChatgpt } from "../lib/runtime/tabs";
 
 export default defineBackground(() => {
   browser.runtime.onMessage.addListener((raw, _sender, sendResponse) => {
@@ -20,12 +16,6 @@ export default defineBackground(() => {
           } else {
             await focusOrOpenChatgptTab();
           }
-          sendResponse({ version: MESSAGE_VERSION, type: "ack", ok: true });
-          return;
-        }
-
-        if (raw.type === "tabs.openVault") {
-          await openVaultTab();
           sendResponse({ version: MESSAGE_VERSION, type: "ack", ok: true });
           return;
         }
