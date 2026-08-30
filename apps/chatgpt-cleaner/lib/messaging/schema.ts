@@ -21,10 +21,6 @@ export type ExtensionMessage =
     }
   | {
       version: typeof MESSAGE_VERSION;
-      type: "tabs.openVault";
-    }
-  | {
-      version: typeof MESSAGE_VERSION;
       type: "ack";
       ok: true;
     }
@@ -45,7 +41,6 @@ export function isExtensionMessage(value: unknown): value is ExtensionMessage {
   switch (message.type) {
     case "cleanup.open":
     case "cleanup.close":
-    case "tabs.openVault":
       return true;
     case "cleanup.status":
       return typeof (value as { open?: unknown }).open === "boolean";
