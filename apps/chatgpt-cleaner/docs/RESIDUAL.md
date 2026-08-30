@@ -1,34 +1,41 @@
-# Phase 7 residual risks and USER blockers
+# Cleanup-only residual risks and USER blockers
 
-Last updated: 2026-08-29
+Last updated: 2026-08-30
 
-## Cleared in engineering (automated)
+## Current scope
 
-- Repository gates: `pnpm qa` and GitHub Actions `validate` on main after Phase 6.
-- Partial-overwrite protection (local + cloud path unit tests).
-- Fail-closed host Archive/Delete until #15 proves live mutators.
-- PKCE-only Auth contract; no `signInWithIdToken` mix.
-- Manifest permissions limited to `storage` + `identity` + chatgpt.com + project Supabase host.
-- Vault renderer uses text nodes + http(s)-only href sanitization.
+- Conversation list discovery
+- Archive
+- Delete
 
-## Live discovery smoke (USER)
+Vault, bookmarks, Google login, Supabase sync and media backup are intentionally out of scope.
 
-After this build, open ChatGPT while signed in and tap **대화방 정리하기**. Expected: a non-empty list if the account has chats; collapsed sidebar must not show a fake empty account. Cursor cannot complete this signed-in smoke.
+## Engineering safeguards
 
-## Still BLOCKED on USER action
+- Archive/Delete private-web calls are isolated in one adapter.
+- Access token is memory-only.
+- Destructive PATCH requests are not automatically retried.
+- Archive and Delete use separate request bodies and must never fall through into each other.
+- Delete confirmation remains owned by the extension cleanup UI.
+- Popup no longer exposes bookmark/Vault/auth actions.
+- Manifest no longer needs `identity` or Supabase host permission.
 
-| Issue | Why blocked | How Cursor verifies after USER completes |
+## Still requires USER live smoke
+
+| Issue | Why | Required evidence |
 | --- | --- | --- |
-| #15 | Need disposable ChatGPT chats + current UI notes (optional private-web approval) for live Archive/Delete binding | Mutation adapter turns green only after compatibility positively proven; then disposable Archive/Delete smoke |
-| #20 | Google Web OAuth client + Supabase redirect allowlist for `https://<extension-id>.chromiumapp.org/` | Popup Sign in with Google → session `signed_in` → cloud bookmark → second profile restore |
+| #15 | Real signed-in ChatGPT destructive behavior cannot be safely proven with automated tests | Archive one disposable conversation and Delete a different disposable conversation after explicit confirmation |
 
-## Residual fragility (accepted for MVP engineering close)
+## Residual fragility
 
-- ChatGPT DOM selectors can drift; discovery/capture fail closed rather than guess.
-- Content script bookmark save has no offline retry queue; failed cloud saves surface Retry on the control.
-- List fallback from cloud→local on cloud list errors is best-effort; unsigned local data is not a merge of cloud history.
-- Real ChatGPT / second-profile / production unpacked smoke remain manual (#20 / #15).
+- `/api/auth/session`, `/backend-api/conversations`, and `/backend-api/conversation/{id}` are private ChatGPT web contracts and may change.
+- If they drift, the extension must show failure rather than guessing a replacement mutation.
+- Real user data must never be used as an automated destructive test target.
 
 ## MVP epic (#6) status rule
 
-Do **not** mark epic #6 DONE while #15 or #20 remain BLOCKED, or while any QA.md release blocker is still true without an explicit residual entry above.
+Do not mark the cleanup-only MVP DONE until:
+- automated repository gates are green;
+- one disposable Archive smoke passes;
+- one separate disposable Delete smoke passes;
+- no Vault/bookmark/login UI is present in the shipping build.
